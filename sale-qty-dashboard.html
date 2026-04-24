@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-slate-50">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Linn - Qty Dashboard</title>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
+    rel="stylesheet">
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Inter', 'sans-serif'] },
+          colors: {
+            brand: {
+              50: '#f0f4ff',
+              100: '#e0e9fe',
+              200: '#c1d3fe',
+              600: '#3259f6',
+              700: '#2641d3',
+              900: '#1e3a8a',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+
+  <!-- Flatpickr (Date Picker) -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+  
+  <!-- Chart.js DataLabels Plugin -->
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+
+  <style type="text/tailwindcss">
+    @layer components {
+      .card { @apply bg-white rounded-2xl shadow-sm border border-slate-200 transition-all duration-300 hover:shadow-md; }
+      .card-header { @apply px-5 py-4 border-b border-slate-100 flex items-center justify-between; }
+      .filter-select { @apply bg-slate-50 border border-slate-200 text-slate-700 text-xs font-semibold rounded-xl focus:ring-brand-600 focus:border-brand-600 block w-full p-2.5 transition-all outline-none; }
+      .table-cell { @apply px-4 py-3 text-xs border-b border-slate-50; }
+      .table-header { @apply px-4 py-3 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider bg-slate-100/80 sticky top-0 backdrop-blur-sm z-10; }
+      .table-row-hover:hover { @apply bg-slate-50/80; }
+    }
+  </style>
+</head>
+
+<body class="h-full">
+  <div class="min-h-full">
+    <!-- Navbar -->
+    <nav class="bg-white border-b border-slate-200 sticky top-0 z-50 backdrop-blur-md bg-white/80">
+      <div class="w-full px-4 lg:px-6">
+        <div class="flex justify-between h-16">
+          <div class="flex items-center">
+            <div class="flex-shrink-0 flex items-center gap-2">
+              <div class="w-8 h-8 bg-brand-600 rounded-lg flex items-center justify-center shadow-lg shadow-brand-200">
+                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
+                </svg>
+              </div>
+              <span class="text-xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-brand-600 to-indigo-600">Linn</span>
+            </div>
+            <div class="hidden md:ml-10 md:flex md:items-center">
+              <div class="relative group">
+                <button class="inline-flex items-center px-1 pt-1 text-sm font-semibold text-slate-700 hover:text-brand-600 transition-colors border-b-2 border-brand-600">
+                  <span>Dashboard</span>
+                  <svg class="ml-2 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                  </svg>
+                </button>
+                <!-- Dropdown Menu -->
+                <div class="absolute left-0 mt-0 w-56 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                  <div class="mt-2 bg-white rounded-xl shadow-xl border border-slate-100 py-2 overflow-hidden transform scale-95 group-hover:scale-100 transition-transform origin-top-left">
+                    <a href="sale-dashboard.html" class="block px-4 py-2.5 text-sm font-medium text-slate-600 hover:bg-brand-50 hover:text-brand-600 transition-colors border-l-4 border-transparent">
+                      Sale Dashboard (Amount)
+                    </a>
+                    <a href="sale-qty-dashboard.html" class="block px-4 py-2.5 text-sm font-medium text-slate-900 bg-slate-50 hover:bg-brand-50 hover:text-brand-600 transition-colors border-l-4 border-brand-600">
+                      Sale Dashboard (Qty)
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="flex items-center gap-4">
+            <span class="text-xs font-medium text-slate-400 bg-slate-100 px-2 py-1 rounded-full uppercase tracking-widest">v6 Prototype</span>
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <main class="w-full py-6 px-4 lg:px-6">
+      <!-- Filters -->
+      <div class="mb-6 p-5 bg-white rounded-2xl shadow-sm border border-slate-200">
+        <div class="flex items-center gap-2 mb-4">
+          <svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path>
+          </svg>
+          <h2 class="text-sm font-semibold text-slate-700 uppercase tracking-wider">Quantity Filters</h2>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div>
+            <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Select Date Range</label>
+            <div class="relative">
+              <input type="text" id="dateRangeFilter" class="filter-select pr-10" placeholder="Pick date range...">
+              <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                <svg class="h-4 w-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                </svg>
+              </div>
+            </div>
+          </div>
+          <div>
+            <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Branch Location</label>
+            <select id="branchFilter" class="filter-select">
+              <option value="all">All Branches</option>
+              <option value="Shop 1">Shop 1 (BG)</option>
+              <option value="Shop 2">Shop 2 (TPG)</option>
+              <option value="Shop 3">Shop 3 (PL)</option>
+              <option value="Shop 4">Shop 4 (MMZ)</option>
+              <option value="Shop 5">Shop 5 (OTT)</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- KPI Summary Cards -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <div class="card p-4 bg-brand-50 border-brand-100">
+          <div class="flex justify-between items-start">
+            <div>
+              <p class="text-brand-600 text-[10px] font-bold uppercase tracking-wider mb-1">Total Quantity</p>
+              <h3 class="text-xl font-black text-brand-900" id="kpiTotalQty">0</h3>
+            </div>
+            <div class="p-2 bg-brand-600 text-white rounded-lg shadow-sm">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+              </svg>
+            </div>
+          </div>
+        </div>
+        <div class="card p-4 bg-blue-50 border-blue-100">
+          <div class="flex justify-between items-start">
+            <div>
+              <p class="text-blue-600 text-[10px] font-bold uppercase tracking-wider mb-1">Mobile Qty</p>
+              <h3 class="text-xl font-black text-blue-900" id="kpiMobileQty">0</h3>
+            </div>
+            <div class="p-2 bg-blue-600 text-white rounded-lg shadow-sm">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+              </svg>
+            </div>
+          </div>
+        </div>
+        <div class="card p-4 bg-emerald-50 border-emerald-100">
+          <div class="flex justify-between items-start">
+            <div>
+              <p class="text-emerald-600 text-[10px] font-bold uppercase tracking-wider mb-1">IT Qty</p>
+              <h3 class="text-xl font-black text-emerald-900" id="kpiITQty">0</h3>
+            </div>
+            <div class="p-2 bg-emerald-600 text-white rounded-lg shadow-sm">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+              </svg>
+            </div>
+          </div>
+        </div>
+        <div class="card p-4 bg-amber-50 border-amber-100">
+          <div class="flex justify-between items-start">
+            <div>
+              <p class="text-amber-600 text-[10px] font-bold uppercase tracking-wider mb-1">Electronic Qty</p>
+              <h3 class="text-xl font-black text-amber-900" id="kpiElectronicQty">0</h3>
+            </div>
+            <div class="p-2 bg-amber-600 text-white rounded-lg shadow-sm">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"></path>
+              </svg>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quantity Charts -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        <div class="card p-5">
+          <div class="flex items-center justify-between mb-5">
+            <h3 class="text-base font-bold text-slate-800">Qty Distribution by Branch</h3>
+          </div>
+          <div class="h-80">
+            <canvas id="qtyBranchChart"></canvas>
+          </div>
+        </div>
+        <div class="card p-5">
+          <div class="flex items-center justify-between mb-5">
+            <h3 class="text-base font-bold text-slate-800">Qty vs Amount Ratio</h3>
+          </div>
+          <div class="h-80">
+            <canvas id="qtyRatioChart"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quantity Tables -->
+      <div class="space-y-6">
+        <div class="card overflow-hidden">
+          <div class="card-header bg-blue-50/50">
+            <h3 class="text-sm font-bold text-blue-900 uppercase tracking-widest">Mobile Sale Qty Analysis</h3>
+          </div>
+          <div class="grid grid-cols-1 lg:grid-cols-2 divide-x divide-slate-100">
+            <div id="mobileTableView" class="overflow-x-auto">
+              <table class="w-full text-xs">
+              <thead>
+                <tr>
+                  <th class="table-header">Category</th>
+                  <th class="table-header text-right">Shop 1 (BG)</th>
+                  <th class="table-header text-right">Shop 2 (TPG)</th>
+                  <th class="table-header text-right">Shop 3 (PL)</th>
+                  <th class="table-header text-right">Shop 4 (MMZ)</th>
+                  <th class="table-header text-right">Shop 5 (OTT)</th>
+                  <th class="table-header text-right bg-blue-100/50">Total Qty</th>
+                  <th class="table-header text-right bg-blue-100/80">Total Amount</th>
+                </tr>
+              </thead>
+              <tbody id="mobileQtyRows" class="divide-y divide-slate-100">
+                <!-- Mock Data -->
+              </tbody>
+              <tfoot class="bg-blue-50 font-bold border-t-2 border-blue-100">
+                <tr id="mobileQtyFooter">
+                  <!-- Mock Totals -->
+                </tfoot>
+              </table>
+            </div>
+            <div id="mobileChartView" class="p-6 bg-slate-50/30">
+              <div class="h-[550px]">
+                <canvas id="mobileHorizontalChart"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- IT Sale Qty Analysis -->
+        <div class="card overflow-hidden">
+          <div class="card-header bg-emerald-50/50">
+            <h3 class="text-sm font-bold text-emerald-900 uppercase tracking-widest">IT Sale Qty Analysis</h3>
+          </div>
+          <div class="grid grid-cols-1 lg:grid-cols-2 divide-x divide-slate-100">
+            <div id="itTableView" class="overflow-x-auto">
+              <table class="w-full text-xs">
+                <thead>
+                  <tr>
+                    <th class="table-header">Category</th>
+                    <th class="table-header text-right">Shop 1 (BG)</th>
+                    <th class="table-header text-right">Shop 2 (TPG)</th>
+                    <th class="table-header text-right">Shop 3 (PL)</th>
+                    <th class="table-header text-right">Shop 4 (MMZ)</th>
+                    <th class="table-header text-right">Shop 5 (OTT)</th>
+                    <th class="table-header text-right bg-emerald-100/50">Total Qty</th>
+                    <th class="table-header text-right bg-emerald-100/80">Total Amount</th>
+                  </tr>
+                </thead>
+                <tbody id="itQtyRows" class="divide-y divide-slate-100"></tbody>
+                <tfoot class="bg-emerald-50 font-bold border-t-2 border-emerald-100">
+                  <tr id="itQtyFooter"></tr>
+                </tfoot>
+              </table>
+            </div>
+            <div id="itChartView" class="p-6 bg-slate-50/30">
+              <div class="h-[550px]">
+                <canvas id="itHorizontalChart"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Electronic Sale Qty Analysis -->
+        <div class="card overflow-hidden">
+          <div class="card-header bg-amber-50/50">
+            <h3 class="text-sm font-bold text-amber-900 uppercase tracking-widest">Electronic Sale Qty Analysis</h3>
+          </div>
+          <div class="grid grid-cols-1 lg:grid-cols-2 divide-x divide-slate-100">
+            <div id="electronicTableView" class="overflow-x-auto">
+              <table class="w-full text-xs">
+                <thead>
+                  <tr>
+                    <th class="table-header">Category</th>
+                    <th class="table-header text-right">Shop 1 (BG)</th>
+                    <th class="table-header text-right">Shop 2 (TPG)</th>
+                    <th class="table-header text-right">Shop 3 (PL)</th>
+                    <th class="table-header text-right">Shop 4 (MMZ)</th>
+                    <th class="table-header text-right">Shop 5 (OTT)</th>
+                    <th class="table-header text-right bg-amber-100/50">Total Qty</th>
+                    <th class="table-header text-right bg-amber-100/80">Total Amount</th>
+                  </tr>
+                </thead>
+                <tbody id="electronicQtyRows" class="divide-y divide-slate-100"></tbody>
+                <tfoot class="bg-amber-50 font-bold border-t-2 border-amber-100">
+                  <tr id="electronicQtyFooter"></tr>
+                </tfoot>
+              </table>
+            </div>
+            <div id="electronicChartView" class="p-6 bg-slate-50/30">
+              <div class="h-[550px]">
+                <canvas id="electronicHorizontalChart"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    // Precise Mock Data from screenshots
+    const mobileData = [
+      { cat: "MP012-Mi Phone", s1: 6, s2: 12, s3: 15, s4: 4, s5: 3, totalAmt: 38813000 },
+      { cat: "MP010-Samsung  Phone", s1: 0, s2: 2, s3: 10, s4: 0, s5: 3, totalAmt: 29690000 },
+      { cat: "MP014-Vivo Phone", s1: 0, s2: 4, s3: 6, s4: 1, s5: 1, totalAmt: 15277600 },
+      { cat: "MP013-Oppo Phone", s1: 0, s2: 0, s3: 6, s4: 0, s5: 4, totalAmt: 15749000 },
+      { cat: "MP017-Itel Phone", s1: 0, s2: 0, s3: 6, s4: 0, s5: 1, totalAmt: 3399300 },
+      { cat: "MP018-Infinix Phone", s1: 0, s2: 1, s3: 4, s4: 1, s5: 1, totalAmt: 4067812 },
+      { cat: "MP016-Tecno Phone", s1: 0, s2: 0, s3: 4, s4: 0, s5: 2, totalAmt: 4824500 },
+      { cat: "MP019-Honor Phone", s1: 1, s2: 2, s3: 3, s4: 0, s5: 0, totalAmt: 7625800 },
+      { cat: "MP001-iPhone", s1: 0, s2: 1, s3: 1, s4: 0, s5: 0, totalAmt: 9660000 },
+      { cat: "MP004-Apple Watch", s1: 0, s2: 1, s3: 0, s4: 0, s5: 0, totalAmt: 1680000 },
+      { cat: "MP011-Huawei Phone", s1: 0, s2: 1, s3: 0, s4: 0, s5: 0, totalAmt: 2584000 },
+      { cat: "MP022-Meizu Phone", s1: 0, s2: 0, s3: 1, s4: 0, s5: 0, totalAmt: 503000 },
+      { cat: "MP032- Keypad", s1: 0, s2: 1, s3: 0, s4: 0, s5: 0, totalAmt: 205000 },
+    ];
+
+    const itData = [
+      { cat: "IT020-Inkjet Printer", s1: 1, s2: 2, s3: 1, s4: 0, s5: 0, totalAmt: 9470000 },
+      { cat: "IT017-Laptop", s1: 0, s2: 1, s3: 1, s4: 0, s5: 1, totalAmt: 14477000 },
+      { cat: "IT018-Laser Printer", s1: 0, s2: 0, s3: 1, s4: 2, s5: 0, totalAmt: 3960000 },
+      { cat: "IT021-Thermal Printer", s1: 0, s2: 1, s3: 0, s4: 0, s5: 1, totalAmt: 925000 },
+      { cat: "IT001-CPU", s1: 0, s2: 1, s3: 0, s4: 0, s5: 0, totalAmt: 1032000 },
+      { cat: "IT026-Flatbed Scanner", s1: 0, s2: 0, s3: 1, s4: 0, s5: 0, totalAmt: 789000 },
+      { cat: "IT032-Projector", s1: 0, s2: 1, s3: 0, s4: 0, s5: 0, totalAmt: 6500000 },
+      { cat: "IT014-Branded", s1: 0, s2: 0, s3: 0, s4: 0, s5: 0, totalAmt: 0 },
+      { cat: "IT015-All in One", s1: 0, s2: 0, s3: 0, s4: 0, s5: 0, totalAmt: 0 },
+    ];
+
+    const electronicData = [
+      { cat: "CE001-32\" TV", s1: 0, s2: 0, s3: 1, s4: 0, s5: 0, totalAmt: 850000 },
+      { cat: "CE002-40\" TV", s1: 1, s2: 0, s3: 0, s4: 0, s5: 0, totalAmt: 1530000 },
+      { cat: "CE015-One Door Refrigerator", s1: 1, s2: 0, s3: 0, s4: 1, s5: 0, totalAmt: 2508000 },
+      { cat: "CE016-Two Door Refrigerator", s1: 0, s2: 0, s3: 1, s4: 0, s5: 0, totalAmt: 2126000 },
+      { cat: "CE021-Chest Freezer", s1: 0, s2: 0, s3: 0, s4: 0, s5: 1, totalAmt: 5635000 },
+      { cat: "CE025-Top Load (Washing Machine)", s1: 0, s2: 1, s3: 1, s4: 0, s5: 0, totalAmt: 3120000 },
+      { cat: "CE030-Inverter Aircon", s1: 0, s2: 0, s3: 1, s4: 0, s5: 1, totalAmt: 3815000 },
+      { cat: "CE031-Non - Inverter Aircon", s1: 0, s2: 1, s3: 1, s4: 0, s5: 0, totalAmt: 4247000 },
+      { cat: "CE040-AC Aircooler", s1: 1, s2: 0, s3: 0, s4: 0, s5: 0, totalAmt: 300000 },
+      { cat: "CE041-Aircooler (AC,DC)", s1: 1, s2: 0, s3: 2, s4: 0, s5: 1, totalAmt: 3594000 },
+      { cat: "CE043-AC Fan", s1: 1, s2: 3, s3: 3, s4: 0, s5: 1, totalAmt: 1330000 },
+      { cat: "CE044-AC,DC Fan", s1: 0, s2: 1, s3: 5, s4: 0, s5: 4, totalAmt: 2127000 },
+    ];
+
+    const format = (n) => n === 0 ? "-" : new Intl.NumberFormat('en-US').format(n);
+
+    function renderTable(id, data, prefix, branchFilter = 'all') {
+      const tbody = document.getElementById(id + "QtyRows");
+      const footer = document.getElementById(id + "QtyFooter");
+      
+      let totals = { s1: 0, s2: 0, s3: 0, s4: 0, s5: 0, qty: 0, amt: 0 };
+      const shopMap = { 'Shop 1': 's1', 'Shop 2': 's2', 'Shop 3': 's3', 'Shop 4': 's4', 'Shop 5': 's5' };
+
+      tbody.innerHTML = data.map(item => {
+        let qty = 0;
+        if (branchFilter === 'all') {
+          qty = item.s1 + item.s2 + item.s3 + item.s4 + item.s5;
+        } else {
+          qty = item[shopMap[branchFilter.split(' (')[0]]];
+        }
+
+        const amt = branchFilter === 'all' ? item.totalAmt : (item.totalAmt * (qty / (item.s1 + item.s2 + item.s3 + item.s4 + item.s5 || 1)));
+        
+        totals.s1 += item.s1; totals.s2 += item.s2; totals.s3 += item.s3;
+        totals.s4 += item.s4; totals.s5 += item.s5;
+        totals.qty += qty; totals.amt += amt;
+
+        const isHidden = (s) => branchFilter !== 'all' && !branchFilter.includes(s) ? 'opacity-20' : '';
+
+        return `
+          <tr class="table-row-hover">
+            <td class="table-cell font-medium text-slate-800">${item.cat}</td>
+            <td class="table-cell text-right text-slate-600 ${isHidden('Shop 1')}">${item.s1}</td>
+            <td class="table-cell text-right text-slate-600 ${isHidden('Shop 2')}">${item.s2}</td>
+            <td class="table-cell text-right text-slate-600 ${isHidden('Shop 3')}">${item.s3}</td>
+            <td class="table-cell text-right text-slate-600 ${isHidden('Shop 4')}">${item.s4}</td>
+            <td class="table-cell text-right text-slate-600 ${isHidden('Shop 5')}">${item.s5}</td>
+            <td class="table-cell text-right font-bold text-brand-600 bg-brand-50/30">${qty}</td>
+            <td class="table-cell text-right font-bold text-slate-900 bg-slate-50/50">${format(Math.round(amt))}</td>
+          </tr>
+        `;
+      }).join('');
+
+      footer.innerHTML = `
+        <td class="table-cell">Total  [  ${prefix}  ]</td>
+        <td class="table-cell text-right ${isHiddenFooter('Shop 1', branchFilter)}">${totals.s1}</td>
+        <td class="table-cell text-right ${isHiddenFooter('Shop 2', branchFilter)}">${totals.s2}</td>
+        <td class="table-cell text-right ${isHiddenFooter('Shop 3', branchFilter)}">${totals.s3}</td>
+        <td class="table-cell text-right ${isHiddenFooter('Shop 4', branchFilter)}">${totals.s4}</td>
+        <td class="table-cell text-right ${isHiddenFooter('Shop 5', branchFilter)}">${totals.s5}</td>
+        <td class="table-cell text-right text-brand-700">${totals.qty}</td>
+        <td class="table-cell text-right text-slate-900">${format(Math.round(totals.amt))}</td>
+      `;
+
+      return totals;
+    }
+
+    function isHiddenFooter(s, filter) {
+      return filter !== 'all' && !filter.includes(s) ? 'opacity-20' : '';
+    }
+
+    Chart.register(ChartDataLabels);
+    Chart.defaults.set('plugins.datalabels', {
+      color: '#fff',
+      font: { weight: 'bold', size: 10 },
+      formatter: (value) => value > 0 ? format(value) : ''
+    });
+
+    let charts = {};
+
+    function initDash() {
+      const branch = document.getElementById('branchFilter').value;
+      
+      const mTotal = renderTable("mobile", mobileData, "M", branch);
+      const iTotal = renderTable("it", itData, "IT", branch);
+      const eTotal = renderTable("electronic", electronicData, "CE", branch);
+
+      document.getElementById("kpiTotalQty").textContent = format(mTotal.qty + iTotal.qty + eTotal.qty);
+      document.getElementById("kpiMobileQty").textContent = format(mTotal.qty);
+      document.getElementById("kpiITQty").textContent = format(iTotal.qty);
+      document.getElementById("kpiElectronicQty").textContent = format(eTotal.qty);
+
+      updateMainCharts(mTotal, iTotal, eTotal);
+      renderHorizontalChart('mobile', mobileData, '#3259f6', branch);
+      renderHorizontalChart('it', itData, '#10b981', branch);
+      renderHorizontalChart('electronic', electronicData, '#f59e0b', branch);
+    }
+
+    function updateMainCharts(m, i, e) {
+      if (charts.dist) charts.dist.destroy();
+      const ctx1 = document.getElementById('qtyBranchChart').getContext('2d');
+      charts.dist = new Chart(ctx1, {
+        type: 'bar',
+        data: {
+          labels: ['Shop 1', 'Shop 2', 'Shop 3', 'Shop 4', 'Shop 5'],
+          datasets: [
+            { label: 'Mobile', data: [m.s1, m.s2, m.s3, m.s4, m.s5], backgroundColor: '#3259f6' },
+            { label: 'IT', data: [i.s1, i.s2, i.s3, i.s4, i.s5], backgroundColor: '#10b981' },
+            { label: 'Electronic', data: [e.s1, e.s2, e.s3, e.s4, e.s5], backgroundColor: '#f59e0b' }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { 
+            legend: { position: 'bottom' },
+            datalabels: { 
+              display: true,
+              anchor: 'end',
+              align: 'top',
+              color: '#64748b',
+              font: { size: 9, weight: 'bold' },
+              formatter: (v) => v > 0 ? v : ''
+            } 
+          },
+          scales: { 
+            y: { 
+              beginAtZero: true,
+              grid: { color: '#f1f5f9' }
+            } 
+          }
+        }
+      });
+
+      if (charts.ratio) charts.ratio.destroy();
+      const ctx2 = document.getElementById('qtyRatioChart').getContext('2d');
+      charts.ratio = new Chart(ctx2, {
+        type: 'doughnut',
+        data: {
+          labels: ['Mobile', 'IT', 'Electronic'],
+          datasets: [{
+            data: [m.qty, i.qty, e.qty],
+            backgroundColor: ['#3259f6', '#10b981', '#f59e0b']
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { 
+            legend: { position: 'bottom' },
+            datalabels: {
+              display: true,
+              formatter: (value, ctx) => {
+                let sum = ctx.dataset.data.reduce((a, b) => a + b, 0);
+                let percentage = (value * 100 / sum).toFixed(1) + "%";
+                return percentage;
+              }
+            }
+          }
+        }
+      });
+    }
+
+    function renderHorizontalChart(id, data, color, branchFilter) {
+      if (charts[id]) charts[id].destroy();
+
+      const shopMap = { 'Shop 1': 's1', 'Shop 2': 's2', 'Shop 3': 's3', 'Shop 4': 's4', 'Shop 5': 's5' };
+      
+      const filteredData = data.map(item => {
+        let qty = 0;
+        if (branchFilter === 'all') {
+          qty = item.s1 + item.s2 + item.s3 + item.s4 + item.s5;
+        } else {
+          qty = item[shopMap[branchFilter.split(' (')[0]]];
+        }
+        return { cat: item.cat, qty: qty };
+      }).sort((a, b) => b.qty - a.qty).filter(i => i.qty > 0);
+
+      const ctx = document.getElementById(id + 'HorizontalChart').getContext('2d');
+      charts[id] = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: filteredData.map(d => d.cat),
+          datasets: [{
+            data: filteredData.map(d => d.qty),
+            backgroundColor: color,
+            borderRadius: 6,
+          }]
+        },
+        options: {
+          indexAxis: 'y',
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            datalabels: {
+              anchor: 'end',
+              align: 'right',
+              color: '#475569',
+              offset: 4,
+              formatter: (v) => format(v)
+            }
+          },
+          scales: {
+            x: { grid: { display: false }, ticks: { display: false } },
+            y: { grid: { display: false }, ticks: { font: { weight: 'bold', size: 11 } } }
+          }
+        }
+      });
+    }
+
+    document.getElementById('branchFilter').addEventListener('change', initDash);
+    flatpickr("#dateRangeFilter", {
+      mode: "range",
+      dateFormat: "d/m/Y",
+      defaultDate: ["01/04/2026", "21/04/2026"],
+      onChange: initDash
+    });
+
+    initDash();
+  </script>
+</body>
+
+</html>

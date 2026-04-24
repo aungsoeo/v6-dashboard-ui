@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-slate-50">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Linn - Sales Dashboard</title>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              50: '#f0f4ff',
+              100: '#e0e9fe',
+              200: '#c1d3fe',
+              300: '#92b3fd',
+              400: '#5c89fa',
+              500: '#3259f6',
+              600: '#1e3be9',
+              700: '#192dbd',
+              800: '#1a2798',
+              900: '#1b2679',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+
+  <!-- Flatpickr (Date Picker) -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+
+  <style type="text/tailwindcss">
+    @layer base {
+      body {
+        @apply font-sans text-slate-900 antialiased;
+      }
+    }
+    @layer components {
+      .card {
+        @apply bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden transition-all duration-300;
+      }
+      .card-header {
+        @apply px-6 py-4 border-b border-slate-100 flex items-center justify-between;
+      }
+      .filter-select {
+        @apply block w-full pl-3 pr-10 py-2 text-sm border-slate-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 rounded-lg bg-slate-50 transition-colors cursor-pointer;
+      }
+      .table-header {
+        @apply px-4 py-3 bg-slate-50 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider border-b border-slate-200;
+      }
+      .table-cell {
+        @apply px-4 py-3 whitespace-nowrap text-sm text-slate-600 border-b border-slate-100;
+      }
+      .table-row-hover {
+        @apply hover:bg-slate-50 transition-colors;
+      }
+    }
+  </style>
+</head>
+
+<body class="h-full">
+  <div class="min-h-full">
+    <!-- Navbar -->
+    <nav class="bg-white border-b border-slate-200 sticky top-0 z-30">
+      <div class="w-full px-2 lg:px-4">
+        <div class="flex justify-between h-16">
+          <div class="flex items-center">
+            <div class="flex-shrink-0 flex items-center gap-2">
+              <div class="w-8 h-8 bg-brand-600 rounded-lg flex items-center justify-center shadow-lg shadow-brand-200">
+                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
+                </svg>
+              </div>
+              <span
+                class="text-xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-brand-600 to-indigo-600">Linn</span>
+            </div>
+            <div class="hidden md:ml-10 md:flex md:items-center">
+              <div class="relative group">
+                <button class="inline-flex items-center px-1 pt-1 text-sm font-semibold text-slate-700 hover:text-brand-600 transition-colors border-b-2 border-brand-600">
+                  <span>Dashboard</span>
+                  <svg class="ml-2 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                  </svg>
+                </button>
+                <!-- Dropdown Menu -->
+                <div class="absolute left-0 mt-0 w-56 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                  <div class="mt-2 bg-white rounded-xl shadow-xl border border-slate-100 py-2 overflow-hidden transform scale-95 group-hover:scale-100 transition-transform origin-top-left">
+                    <a href="sale-dashboard.html" class="block px-4 py-2.5 text-sm font-medium text-slate-900 bg-slate-50 hover:bg-brand-50 hover:text-brand-600 transition-colors border-l-4 border-brand-600">
+                      Sale Dashboard (Amount)
+                    </a>
+                    <a href="sale-qty-dashboard.html" class="block px-4 py-2.5 text-sm font-medium text-slate-600 hover:bg-brand-50 hover:text-brand-600 transition-colors border-l-4 border-transparent">
+                      Sale Dashboard (Qty)
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="flex items-center gap-4">
+            <span
+              class="text-xs font-medium text-slate-400 bg-slate-100 px-2 py-1 rounded-full uppercase tracking-widest">v6
+              Prototype</span>
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <main class="w-full py-6 px-4 lg:px-6">
+      <!-- Filters Section -->
+      <div class="mb-6 p-5 bg-white rounded-2xl shadow-sm border border-slate-200">
+        <div class="flex items-center gap-2 mb-4">
+          <svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z">
+            </path>
+          </svg>
+          <h2 class="text-sm font-semibold text-slate-700 uppercase tracking-wider">Dashboard Filters</h2>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div class="space-y-1.5">
+            <label for="dateRangeFilter" class="block text-xs font-medium text-slate-500 ml-1">Select Date Range</label>
+            <div class="relative">
+              <input type="text" id="dateRangeFilter" class="filter-select pr-10" placeholder="Pick date range...">
+              <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                <svg class="h-4 w-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                </svg>
+              </div>
+            </div>
+          </div>
+          <div class="space-y-1.5">
+            <label for="branchFilter" class="block text-xs font-medium text-slate-500 ml-1">Branch Location</label>
+            <select id="branchFilter" class="filter-select">
+              <option value="all">All Branches</option>
+              <option value="Shop 1">Shop 1</option>
+              <option value="Shop 2">Shop 2</option>
+              <option value="Shop 3">Shop 3</option>
+              <option value="Shop 4">Shop 4</option>
+              <option value="Shop 5">Shop 5</option>
+            </select>
+          </div>
+          <div class="space-y-1.5">
+            <label for="categoryFilter" class="block text-xs font-medium text-slate-500 ml-1">Product Category</label>
+            <select id="categoryFilter" class="filter-select">
+              <option value="all">All Categories</option>
+              <option value="it">IT</option>
+              <option value="mobile">Mobile</option>
+              <option value="electronic">Electronics</option>
+              <option value="apple">iDevices</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- KPI Summary Cards -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+        <div class="card p-4 bg-brand-50 border-brand-100">
+          <div class="flex justify-between items-start">
+            <div>
+              <p class="text-brand-600 text-[10px] font-bold uppercase tracking-wider mb-1">Total Sales</p>
+              <h3 class="text-xl font-black text-brand-900" id="kpiTotalSales">0</h3>
+            </div>
+            <div class="p-2 bg-brand-600 text-white rounded-lg shadow-sm">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z">
+                </path>
+              </svg>
+            </div>
+          </div>
+        </div>
+        <div class="card p-4 bg-blue-50 border-blue-100">
+          <div class="flex justify-between items-start">
+            <div>
+              <p class="text-blue-600 text-[10px] font-bold uppercase tracking-wider mb-1">Mobile</p>
+              <h3 class="text-xl font-black text-blue-900" id="kpiMobile">0</h3>
+            </div>
+            <div class="p-2 bg-blue-600 text-white rounded-lg shadow-sm">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+              </svg>
+            </div>
+          </div>
+        </div>
+        <div class="card p-4 bg-emerald-50 border-emerald-100">
+          <div class="flex justify-between items-start">
+            <div>
+              <p class="text-emerald-600 text-[10px] font-bold uppercase tracking-wider mb-1">IT</p>
+              <h3 class="text-xl font-black text-emerald-900" id="kpiIT">0</h3>
+            </div>
+            <div class="p-2 bg-emerald-600 text-white rounded-lg shadow-sm">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z">
+                </path>
+              </svg>
+            </div>
+          </div>
+        </div>
+        <div class="card p-4 bg-amber-50 border-amber-100">
+          <div class="flex justify-between items-start">
+            <div>
+              <p class="text-amber-600 text-[10px] font-bold uppercase tracking-wider mb-1">Electronics</p>
+              <h3 class="text-xl font-black text-amber-900" id="kpiElectronics">0</h3>
+            </div>
+            <div class="p-2 bg-amber-600 text-white rounded-lg shadow-sm">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z">
+                </path>
+              </svg>
+            </div>
+          </div>
+        </div>
+        <div class="card p-4 bg-slate-50 border-slate-100">
+          <div class="flex justify-between items-start">
+            <div>
+              <p class="text-slate-600 text-[10px] font-bold uppercase tracking-wider mb-1">iDevices</p>
+              <h3 class="text-xl font-black text-slate-900" id="kpiIDevices">0</h3>
+            </div>
+            <div class="p-2 bg-slate-600 text-white rounded-lg shadow-sm">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M12 18h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+              </svg>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Main Tables Section -->
+      <div class="mb-4">
+        <div class="card">
+          <div class="card-header">
+            <h3 class="text-lg font-bold text-slate-800">Branch Performance Overview</h3>
+            <button class="text-xs font-semibold text-brand-600 hover:text-brand-700 flex items-center gap-1">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+              </svg>
+              Export CSV
+            </button>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full">
+              <thead id="branchHead">
+                <!-- Dynamic Header -->
+              </thead>
+              <tbody id="branchRows" class="bg-white">
+                <!-- Dynamic Rows -->
+              </tbody>
+              <tfoot id="branchTotals" class="bg-slate-50 font-bold">
+                <!-- Dynamic Totals -->
+              </tfoot>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Charts Grid -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+        <div class="lg:col-span-2 card p-5">
+          <div class="flex items-center justify-between mb-5">
+            <h3 class="text-base font-bold text-slate-800">Sales by Branch & Category</h3>
+            <div class="flex gap-2">
+              <span class="w-3 h-3 rounded-full bg-brand-400"></span>
+              <span class="w-3 h-3 rounded-full bg-indigo-400"></span>
+              <span class="w-3 h-3 rounded-full bg-slate-300"></span>
+            </div>
+          </div>
+          <div class="h-[550px]">
+            <canvas id="branchChart"></canvas>
+          </div>
+        </div>
+        <div class="card p-5">
+          <h3 class="text-base font-bold text-slate-800 mb-5">Revenue Distribution</h3>
+          <div class="h-80 relative">
+            <canvas id="totalChart"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- Daily Summary Cards (New Row) -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+        <div class="card p-5 border-2 border-brand-600/20 text-center">
+          <h3 class="text-2xl font-black text-brand-600 mb-2" id="kpiDailyTotal">0</h3>
+          <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Total Revenue (MMK)</p>
+        </div>
+        <div class="card p-5 border-2 border-emerald-500/20 text-center">
+          <h3 class="text-2xl font-black text-emerald-600 mb-2" id="kpiDailyAvg">0</h3>
+          <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Daily Average (MMK)</p>
+        </div>
+        <div class="card p-5 border-2 border-rose-500/20 text-center">
+          <h3 class="text-2xl font-black text-rose-600 mb-2" id="kpiPeakDate">-</h3>
+          <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Peak Date (<span
+              id="kpiPeakAmount">0</span>)</p>
+        </div>
+      </div>
+
+      <!-- Bottom Grid: Daily Sales -->
+      <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        <div class="lg:col-span-1 card">
+          <div class="card-header bg-slate-50/50 py-4">
+            <h3 class="text-sm font-bold text-slate-800 uppercase tracking-wider">Daily Breakdown</h3>
+          </div>
+          <div class="overflow-y-auto max-h-[600px]">
+            <table class="w-full text-xs">
+              <thead class="sticky top-0 bg-slate-100 z-10">
+                <tr>
+                  <th class="px-4 py-2 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider">Date
+                  </th>
+                  <th class="px-4 py-2 text-right text-[10px] font-bold text-slate-500 uppercase tracking-wider">Amount
+                  </th>
+                </tr>
+              </thead>
+              <tbody id="dailyRows" class="divide-y divide-slate-100">
+                <!-- Dynamic Rows -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="lg:col-span-3 card p-5">
+          <div class="flex items-center justify-between mb-5">
+            <h3 class="text-base font-bold text-slate-800">Daily Sales Performance<Perfo></Perfo>
+            </h3>
+            <div class="text-xs font-medium text-slate-400">Timeline Trend</div>
+          </div>
+          <div class="h-[550px]">
+            <canvas id="dailyChart"></canvas>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="w-full py-8 px-2 lg:px-4 border-t border-slate-200 mt-12">
+      <div class="flex flex-col md:flex-row justify-between items-center gap-4">
+        <p class="text-sm text-slate-500">© 2026 </p>
+        <div class="flex gap-6">
+          <!-- <a href="#"
+            class="text-xs font-semibold text-slate-400 hover:text-slate-600 transition-colors uppercase tracking-widest">Support</a>
+          <a href="#"
+            class="text-xs font-semibold text-slate-400 hover:text-slate-600 transition-colors uppercase tracking-widest">Privacy</a>
+          <a href="#"
+            class="text-xs font-semibold text-slate-400 hover:text-slate-600 transition-colors uppercase tracking-widest">Documentation</a> -->
+        </div>
+      </div>
+    </footer>
+  </div>
+
+  <script>
+    // Configuration & Data
+    const money = new Intl.NumberFormat("en-US", {
+      style: "decimal",
+      maximumFractionDigits: 0
+    });
+
+    const categoryKeys = ["mobile", "electronic", "it", "apple"];
+
+    // Theme Colors
+    const colors = {
+      brand: '#3259f6',
+      indigo: '#33bd36',
+      emerald: '#10b981',
+      amber: '#f59e0b',
+      rose: '#f43f5e',
+      slate: '#94a3b8',
+      background: '#f8fafc',
+      grid: '#e2e8f0',
+      text: '#475569'
+    };
+
+    const branches = [
+      { branch: "Shop 1", mobile: 8557100, electronic: 5077000, it: 3252000, apple: 0 },
+      { branch: "Shop 2", mobile: 40854440, electronic: 5494500, it: 45525400, apple: 6510000 },
+      { branch: "Shop 3", mobile: 60656800, electronic: 15199000, it: 18688500, apple: 4830000 },
+      { branch: "Shop 4", mobile: 8190099, electronic: 1014000, it: 5479400, apple: 0 },
+      { branch: "Shop 5", mobile: 23599700, electronic: 10155400, it: 7563800, apple: 0 }
+    ].map((item) => ({
+      ...item,
+      total: categoryKeys.reduce((sum, key) => sum + item[key], 0)
+    }));
+
+    const dailySales = [
+      ["01/04/2026", 296682250],
+      ["02/04/2026", 191676400],
+      ["03/04/2026", 225896630],
+      ["04/04/2026", 225261498],
+      ["05/04/2026", 259634181],
+      ["06/04/2026", 327499340],
+      ["07/04/2026", 220114860],
+      ["08/04/2026", 352283900],
+      ["09/04/2026", 330740760],
+      ["10/04/2026", 285853680],
+      ["11/04/2026", 346465160],
+      ["12/04/2026", 288167500],
+      ["18/04/2026", 376932850],
+      ["19/04/2026", 315139900],
+      ["20/04/2026", 241162050],
+      ["21/04/2026", 270647139]
+    ];
+
+    const categories = [
+      { key: "mobile", label: "Mobile", color: colors.brand },
+      { key: "electronic", label: "Electronics", color: colors.amber },
+      { key: "it", label: "IT", color: colors.indigo },
+      { key: "apple", label: "iDevices", color: colors.slate }
+    ];
+
+    let branchChart;
+    let totalChart;
+    let dailyChart;
+
+    // Helper Functions
+    function format(value) {
+      return money.format(value);
+    }
+
+    function toDateNumber(value) {
+      const [day, month, year] = value.split("/").map(Number);
+      return year * 10000 + month * 100 + day;
+    }
+
+    function getSelectedCategories(categoryKey) {
+      return categoryKey === "all" ? categories : categories.filter(c => c.key === categoryKey);
+    }
+
+    function getFilteredBranches(branchName) {
+      return branchName === "all" ? branches : branches.filter(b => b.branch === branchName);
+    }
+
+    function getFilteredDailySales() {
+      const picker = document.getElementById("dateRangeFilter")._flatpickr;
+      const selectedDates = picker.selectedDates;
+
+      if (selectedDates.length < 2) return dailySales;
+
+      const start = selectedDates[0];
+      const end = selectedDates[1];
+
+      // Set hours to 0 for accurate comparison
+      start.setHours(0, 0, 0, 0);
+      end.setHours(23, 59, 59, 999);
+
+      return dailySales.filter(([dateStr]) => {
+        const [d, m, y] = dateStr.split("/").map(Number);
+        const date = new Date(y, m - 1, d);
+        return date >= start && date <= end;
+      });
+    }
+
+    function updateKPIs(productTotals, filteredDaily) {
+      document.getElementById('kpiTotalSales').textContent = format(productTotals.total);
+      document.getElementById('kpiMobile').textContent = format(productTotals.mobile || 0);
+      document.getElementById('kpiIT').textContent = format(productTotals.it || 0);
+      document.getElementById('kpiElectronics').textContent = format(productTotals.electronic || 0);
+      document.getElementById('kpiIDevices').textContent = format(productTotals.apple || 0);
+
+      // Daily Metrics
+      const totalDaily = filteredDaily.reduce((sum, d) => sum + d[1], 0);
+      const avgDaily = filteredDaily.length ? totalDaily / filteredDaily.length : 0;
+
+      let peak = filteredDaily.length ? filteredDaily[0] : [null, 0];
+      filteredDaily.forEach(d => {
+        if (d[1] > peak[1]) peak = d;
+      });
+
+      document.getElementById('kpiDailyTotal').textContent = format(totalDaily);
+      document.getElementById('kpiDailyAvg').textContent = format(avgDaily);
+      if (peak[0]) {
+        const [d, m] = peak[0].split("/");
+        const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+        document.getElementById('kpiPeakDate').textContent = `${parseInt(d)} ${months[parseInt(m) - 1]}`;
+        document.getElementById('kpiPeakAmount').textContent = format(peak[1]);
+      } else {
+        document.getElementById('kpiPeakDate').textContent = "-";
+        document.getElementById('kpiPeakAmount').textContent = "0";
+      }
+    }
+
+    // Rendering Functions
+    function renderBranchTable(filteredBranches, selectedCategories, productTotals) {
+      const head = document.getElementById("branchHead");
+      head.innerHTML = `
+        <tr>
+          <th class="table-header">Branch Location</th>
+          ${selectedCategories.map(c => `<th class="table-header text-right">${c.label}</th>`).join("")}
+          <th class="table-header text-right bg-brand-50 text-brand-700">Total Revenue</th>
+        </tr>
+      `;
+
+      const rows = document.getElementById("branchRows");
+      rows.innerHTML = filteredBranches.length
+        ? filteredBranches.map(item => `
+          <tr class="table-row-hover">
+            <td class="table-cell font-medium text-slate-800">${item.branch}</td>
+            ${selectedCategories.map(c => `<td class="table-cell text-right">${format(item[c.key])}</td>`).join("")}
+            <td class="table-cell text-right font-bold text-brand-600 bg-brand-50/30">${format(selectedCategories.reduce((sum, c) => sum + item[c.key], 0))}</td>
+          </tr>
+        `).join("")
+        : `<tr><td colspan="100%" class="px-6 py-12 text-center text-slate-400 italic">No branch data matches your filters</td></tr>`;
+
+      const footer = document.getElementById("branchTotals");
+      footer.innerHTML = `
+        <tr class="bg-slate-50/80">
+          <td class="table-cell font-bold text-slate-900">Aggregate Totals</td>
+          ${selectedCategories.map(c => `<td class="table-cell text-right text-slate-900">${format(productTotals[c.key])}</td>`).join("")}
+          <td class="table-cell text-right text-brand-700 bg-brand-50">${format(productTotals.total)}</td>
+        </tr>
+      `;
+    }
+
+    function renderDailyTable(filteredDailySales) {
+      const rows = document.getElementById("dailyRows");
+      rows.innerHTML = filteredDailySales.length
+        ? filteredDailySales.map(([date, val]) => `
+          <tr class="hover:bg-slate-50">
+            <td class="px-4 py-3 text-xs text-slate-500 font-medium">${date}</td>
+            <td class="px-4 py-3 text-xs text-right text-slate-800 font-bold">${format(val)}</td>
+          </tr>
+        `).join("")
+        : `<tr><td colspan="2" class="p-4 text-center text-slate-400">Empty</td></tr>`;
+    }
+
+    // Chart Plugins
+    const barDataLabels = {
+      id: 'barDataLabels',
+      afterDatasetsDraw(chart) {
+        const { ctx, data, chartArea: { right }, scales: { y } } = chart;
+        ctx.save();
+        ctx.font = '600 10px Inter';
+        ctx.fillStyle = colors.text;
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'middle';
+
+        chart.data.datasets.forEach((dataset, i) => {
+          chart.getDatasetMeta(i).data.forEach((bar, index) => {
+            const value = dataset.data[index];
+            if (value > 0) {
+              const xPos = Math.min(bar.x + 5, right - 40);
+              ctx.fillText(format(value).replace('.00', ''), xPos, bar.y);
+            }
+          });
+        });
+        ctx.restore();
+      }
+    };
+
+    const pieDataLabels = {
+      id: 'pieDataLabels',
+      afterDatasetsDraw(chart) {
+        const { ctx, data } = chart;
+        ctx.save();
+        ctx.font = '700 10px Inter';
+        ctx.fillStyle = '#fff';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+
+        chart.getDatasetMeta(0).data.forEach((datapoint, index) => {
+          const { x, y } = datapoint.tooltipPosition();
+          const value = data.datasets[0].data[index];
+          const total = data.datasets[0].data.reduce((a, b) => a + b, 0);
+          const percentage = ((value / total) * 100).toFixed(0) + '%';
+
+          if (value > (total * 0.05)) { // Only show if > 5%
+            ctx.fillText(percentage, x, y);
+          }
+        });
+        ctx.restore();
+      }
+    };
+
+    const lineDataLabels = {
+      id: 'lineDataLabels',
+      afterDatasetsDraw(chart) {
+        const { ctx, data } = chart;
+        ctx.save();
+        ctx.font = '600 9px Inter';
+        ctx.fillStyle = colors.text;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'bottom';
+
+        chart.getDatasetMeta(0).data.forEach((point, index) => {
+          const value = data.datasets[0].data[index];
+          if (value > 0) {
+            ctx.fillText(format(value).replace('.00', ''), point.x, point.y - 8);
+          }
+        });
+        ctx.restore();
+      }
+    };
+
+    // Charting Functions
+    function updateBranchChart(filteredBranches, selectedCategories) {
+      const labels = filteredBranches.map(b => b.branch);
+      const datasets = selectedCategories.map(cat => ({
+        label: cat.label,
+        data: filteredBranches.map(b => b[cat.key]),
+        backgroundColor: cat.color,
+        borderRadius: 4,
+        barPercentage: 0.7,
+        categoryPercentage: 0.8
+      }));
+
+      if (!branchChart) {
+        branchChart = new Chart(document.getElementById("branchChart"), {
+          type: "bar",
+          data: { labels, datasets },
+          plugins: [barDataLabels],
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            indexAxis: "y",
+            layout: { padding: { right: 50 } },
+            plugins: {
+              legend: { position: "bottom", labels: { boxWidth: 8, usePointStyle: true, padding: 20, font: { size: 11, family: 'Inter' } } },
+              tooltip: { backgroundColor: '#1e293b', padding: 12, titleFont: { size: 14 }, bodyFont: { size: 13 }, cornerRadius: 8 }
+            },
+            scales: {
+              x: { grid: { borderDash: [4, 4], color: '#e2e8f0' }, ticks: { font: { size: 10 }, callback: v => format(v) } },
+              y: { grid: { display: false }, ticks: { font: { size: 11, weight: '500' } } }
+            }
+          }
+        });
+      } else {
+        branchChart.data.labels = labels;
+        branchChart.data.datasets = datasets;
+        branchChart.update();
+      }
+    }
+
+    function updateTotalChart(productTotals, selectedCategories) {
+      const labels = selectedCategories.map(c => c.label);
+      const data = selectedCategories.map(c => productTotals[c.key]);
+      const backgroundColor = selectedCategories.map(c => c.color);
+
+      if (!totalChart) {
+        totalChart = new Chart(document.getElementById("totalChart"), {
+          type: "doughnut",
+          data: { labels, datasets: [{ data, backgroundColor, borderWidth: 2, borderColor: '#fff' }] },
+          plugins: [pieDataLabels],
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            cutout: '65%',
+            plugins: {
+              legend: { position: 'bottom', labels: { boxWidth: 8, usePointStyle: true, padding: 15, font: { size: 10 } } },
+              tooltip: { callbacks: { label: (ctx) => `${ctx.label}: ${format(ctx.raw)}` } }
+            }
+          }
+        });
+      } else {
+        totalChart.data.labels = labels;
+        totalChart.data.datasets[0].data = data;
+        totalChart.data.datasets[0].backgroundColor = backgroundColor;
+        totalChart.update();
+      }
+    }
+
+    function updateDailyChart(filteredDailySales) {
+      const labels = filteredDailySales.map(d => d[0]);
+      const data = filteredDailySales.map(d => d[1]);
+
+      if (!dailyChart) {
+        dailyChart = new Chart(document.getElementById("dailyChart"), {
+          type: "line",
+          data: {
+            labels,
+            datasets: [{
+              label: "Daily Revenue",
+              data,
+              borderColor: colors.brand,
+              backgroundColor: 'rgba(50, 89, 246, 0.05)',
+              borderWidth: 3,
+              pointBackgroundColor: '#fff',
+              pointBorderColor: colors.brand,
+              pointBorderWidth: 2,
+              pointRadius: 4,
+              pointHoverRadius: 6,
+              fill: true,
+              tension: 0.4
+            }]
+          },
+          plugins: [lineDataLabels],
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { display: false },
+              tooltip: { mode: 'index', intersect: false }
+            },
+            scales: {
+              x: { grid: { display: false }, ticks: { font: { size: 10 }, maxRotation: 45 } },
+              y: { grid: { color: '#f1f5f9' }, ticks: { font: { size: 10 }, callback: v => format(v) } }
+            }
+          }
+        });
+      } else {
+        dailyChart.data.labels = labels;
+        dailyChart.data.datasets[0].data = data;
+        dailyChart.update();
+      }
+    }
+
+    function applyFilters() {
+      const branch = document.getElementById("branchFilter").value;
+      const category = document.getElementById("categoryFilter").value;
+
+      const selectedCats = getSelectedCategories(category);
+      const filteredBranches = getFilteredBranches(branch);
+      const filteredDaily = getFilteredDailySales();
+
+      const productTotals = selectedCats.reduce((acc, cat) => {
+        acc[cat.key] = filteredBranches.reduce((sum, b) => sum + (b[cat.key] || 0), 0);
+        return acc;
+      }, { total: 0 });
+
+      productTotals.total = Object.values(productTotals).reduce((sum, v) => sum + v, 0);
+
+      updateKPIs(productTotals, filteredDaily);
+      renderBranchTable(filteredBranches, selectedCats, productTotals);
+      renderDailyTable(filteredDaily);
+      updateBranchChart(filteredBranches, selectedCats);
+      updateTotalChart(productTotals, selectedCats);
+      updateDailyChart(filteredDaily);
+    }
+
+    // Init
+    flatpickr("#dateRangeFilter", {
+      mode: "range",
+      dateFormat: "d/m/Y",
+      defaultDate: ["01/04/2026", "21/04/2026"],
+      onChange: applyFilters
+    });
+
+    document.querySelectorAll("select").forEach(s => s.addEventListener("change", applyFilters));
+    applyFilters();
+  </script>
+</body>
+
+</html>
