@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-slate-100">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Linn - Inventory Dashboard</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Space+Grotesk:wght@600;700&display=swap"
+    rel="stylesheet">
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Manrope', 'sans-serif'],
+            display: ['Space Grotesk', 'sans-serif']
+          },
+          colors: {
+            ink: '#0f172a',
+            steel: '#334155',
+            mist: '#e2e8f0',
+            brand: {
+              50: '#eff6ff',
+              100: '#dbeafe',
+              200: '#bfdbfe',
+              500: '#3b82f6',
+              600: '#2563eb',
+              700: '#1d4ed8',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+
+  <style type="text/tailwindcss">
+    @layer base {
+      body {
+        @apply font-sans text-ink antialiased;
+      }
+    }
+
+    @layer components {
+      .panel {
+        @apply bg-white/90 backdrop-blur rounded-2xl border border-slate-200 shadow-sm;
+      }
+
+      .kpi-card {
+        @apply panel p-4 min-h-[130px] flex flex-col justify-between;
+      }
+
+      .metric-label {
+        @apply text-[11px] uppercase tracking-wider font-semibold text-slate-500;
+      }
+
+      .metric-value {
+        @apply text-2xl font-display font-bold text-slate-900;
+      }
+
+      .filter-select {
+        @apply block w-full pl-3 pr-10 py-2 text-sm border-slate-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 rounded-lg bg-slate-50 transition-colors cursor-pointer;
+      }
+
+      .table-head-cell {
+        @apply px-4 py-3 text-[11px] uppercase tracking-wider font-semibold text-slate-500 bg-slate-100 text-right whitespace-nowrap;
+      }
+
+      .table-cell {
+        @apply px-4 py-3 text-sm text-right whitespace-nowrap border-b border-slate-100;
+      }
+    }
+  </style>
+</head>
+
+<body class="h-full bg-gradient-to-b from-slate-100 via-slate-50 to-white">
+  <div class="min-h-full">
+    <!-- Navbar -->
+    <nav class="bg-white border-b border-slate-200 sticky top-0 z-30">
+      <div class="w-full px-2 lg:px-4">
+        <div class="flex justify-between h-16">
+          <div class="flex items-center">
+            <div class="flex-shrink-0 flex items-center gap-2">
+              <div class="w-8 h-8 bg-brand-600 rounded-lg flex items-center justify-center shadow-lg shadow-brand-200">
+                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
+                </svg>
+              </div>
+              <span
+                class="text-xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-brand-600 to-indigo-600">Linn</span>
+            </div>
+            <div class="hidden md:ml-10 md:flex md:items-center">
+              <div class="relative group">
+                <button
+                  class="inline-flex items-center px-1 pt-1 text-sm font-semibold text-slate-700 hover:text-brand-600 transition-colors border-b-2 border-brand-600">
+                  <span>Dashboard</span>
+                  <svg class="ml-2 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                  </svg>
+                </button>
+                <!-- Dropdown Menu -->
+                <div
+                  class="absolute left-0 mt-0 w-56 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                  <div
+                    class="mt-2 bg-white rounded-xl shadow-xl border border-slate-100 py-2 overflow-hidden transform scale-95 group-hover:scale-100 transition-transform origin-top-left">
+                    <a href="index.html"
+                      class="block px-4 py-2.5 text-sm font-medium text-slate-600 hover:bg-brand-50 hover:text-brand-600 transition-colors border-l-4 border-transparent">
+                      Sale Dashboard (Amount)
+                    </a>
+                    <a href="sale-qty-dashboard.html"
+                      class="block px-4 py-2.5 text-sm font-medium text-slate-600 hover:bg-brand-50 hover:text-brand-600 transition-colors border-l-4 border-transparent">
+                      Sale Dashboard (Qty)
+                    </a>
+                    <a href="inventory-dashboard.html"
+                      class="block px-4 py-2.5 text-sm font-medium text-slate-900 bg-slate-50 hover:bg-brand-50 hover:text-brand-600 transition-colors border-l-4 border-brand-600">
+                      Inventory Dashboard
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="flex items-center gap-4">
+            <span
+              class="text-xs font-medium text-slate-400 bg-slate-100 px-2 py-1 rounded-full uppercase tracking-widest">v6
+              Prototype</span>
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <main class="w-full px-4 lg:px-6 py-6 space-y-6">
+      <!-- <section class="panel p-5 lg:p-6 bg-gradient-to-r from-slate-950 via-slate-900 to-slate-800 text-white">
+        <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+          <div>
+            <h1 class="text-2xl lg:text-3xl font-display font-bold tracking-tight">Inventory Dashboard</h1>
+            <p class="text-slate-300 mt-1 text-sm">Built from your branch matrix (Shop 1-5 + Warehouse) with live
+              totals.</p>
+          </div>
+          <div class="inline-flex items-center gap-2 px-3 py-2 rounded-full bg-emerald-500/20 border border-emerald-300/30">
+            <span class="w-2 h-2 rounded-full bg-emerald-300 animate-pulse"></span>
+            <span class="text-xs font-semibold uppercase tracking-widest text-emerald-100">System Live</span>
+          </div>
+        </div>
+      </section> -->
+
+      <section class="p-5 bg-white rounded-2xl shadow-sm border border-slate-200">
+        <div class="flex items-center gap-2 mb-4">
+          <svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z">
+            </path>
+          </svg>
+          <h2 class="text-sm font-semibold text-slate-700 uppercase tracking-wider">Inventory Filters</h2>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div class="space-y-1.5">
+            <label class="block text-xs font-medium text-slate-500 ml-1" for="scopeFilter">Scope</label>
+            <select id="scopeFilter" class="filter-select">
+              <option value="retail">Retail Only (Shop 1-5)</option>
+              <option value="all">All Locations (Include Warehouse)</option>
+            </select>
+          </div>
+          <div class="space-y-1.5">
+            <label class="block text-xs font-medium text-slate-500 ml-1" for="branchFilter">Branch Location</label>
+            <select id="branchFilter" class="filter-select"></select>
+          </div>
+          <div class="space-y-1.5">
+            <label class="block text-xs font-medium text-slate-500 ml-1" for="viewFilter">Display Mode</label>
+            <select id="viewFilter" class="filter-select">
+              <option value="core">Core Categories (Mobile, Electronic, IT)</option>
+              <option value="service">Service Categories (AE, AH, AS, Services)</option>
+            </select>
+          </div>
+        </div>
+        <p id="scopeNote" class="text-xs text-slate-500 mt-3"></p>
+      </section>
+
+      <section class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-4">
+        <article class="kpi-card bg-gradient-to-br from-brand-50 to-white border-brand-200">
+          <div class="metric-label">Total Inventory Value</div>
+          <div class="metric-value" id="kpiTotalValue">0</div>
+          <div class="text-xs text-slate-500" id="kpiBranchCount">0 locations</div>
+        </article>
+
+        <article class="kpi-card">
+          <div class="metric-label">Mobile</div>
+          <div class="metric-value text-brand-700" id="kpiMobile">0</div>
+          <div class="text-xs text-slate-500" id="kpiMobileShare">0% of total</div>
+        </article>
+
+        <article class="kpi-card">
+          <div class="metric-label">Electronic</div>
+          <div class="metric-value text-amber-600" id="kpiElectronic">0</div>
+          <div class="text-xs text-slate-500" id="kpiElectronicShare">0% of total</div>
+        </article>
+
+        <article class="kpi-card">
+          <div class="metric-label">IT</div>
+          <div class="metric-value text-emerald-700" id="kpiIT">0</div>
+          <div class="text-xs text-slate-500" id="kpiITShare">0% of total</div>
+        </article>
+
+        <article class="kpi-card bg-gradient-to-br from-slate-50 to-white">
+          <div class="metric-label">Top Branch</div>
+          <div class="text-xl font-display font-bold" id="kpiTopBranch">-</div>
+          <div class="text-xs text-slate-500">Value: <span id="kpiTopValue">0</span></div>
+          <div class="text-xs text-slate-500">Avg: <span id="kpiAvgValue">0</span></div>
+        </article>
+      </section>
+
+      <section class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+        <article class="panel p-5 xl:col-span-2">
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="text-base font-display font-bold">Branch Value by Core Category</h2>
+            <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">MMK</span>
+          </div>
+          <div class="h-[340px]">
+            <canvas id="branchCoreChart"></canvas>
+          </div>
+        </article>
+
+        <article class="panel p-5">
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="text-base font-display font-bold">Category Mix</h2>
+            <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Share</span>
+          </div>
+          <div class="h-[340px]">
+            <canvas id="categoryMixChart"></canvas>
+          </div>
+        </article>
+      </section>
+
+      <section class="grid grid-cols-1 xl:grid-cols-2 gap-6">
+        <article class="panel p-5">
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="text-base font-display font-bold">Service Category Totals</h2>
+            <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">MMK</span>
+          </div>
+          <div class="h-[320px]">
+            <canvas id="serviceMixChart"></canvas>
+          </div>
+        </article>
+
+        <article class="panel p-5">
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="text-base font-display font-bold">Branch Ranking by Total</h2>
+            <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">MMK</span>
+          </div>
+          <div class="h-[320px]">
+            <canvas id="branchRankChart"></canvas>
+          </div>
+        </article>
+      </section>
+
+      <section class="panel overflow-hidden">
+        <div
+          class="px-5 py-4 border-b border-slate-200 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-2">
+          <h2 class="text-base font-display font-bold">Inventory Matrix</h2>
+          <p class="text-xs text-slate-500">`Total` follows the source table values from your screenshot.</p>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full min-w-[1320px]">
+            <thead>
+              <tr>
+                <th class="table-head-cell text-left">Branch</th>
+                <th class="table-head-cell">Mobile</th>
+                <th class="table-head-cell">Electronic</th>
+                <th class="table-head-cell">IT</th>
+                <th class="table-head-cell">AE</th>
+                <th class="table-head-cell">AH</th>
+                <th class="table-head-cell">AS</th>
+                <th class="table-head-cell">Mobile Service</th>
+                <th class="table-head-cell">Printer Service</th>
+                <th class="table-head-cell">System Service</th>
+                <th class="table-head-cell bg-brand-50 text-brand-700">Total</th>
+              </tr>
+            </thead>
+            <tbody id="matrixBody"></tbody>
+            <tfoot id="matrixFoot" class="bg-amber-50/60"></tfoot>
+          </table>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    const numberFormatter = new Intl.NumberFormat("en-US", {
+      style: "decimal",
+      maximumFractionDigits: 0
+    });
+
+    const inventoryRows = [
+      {
+        branch: "Shop 1",
+        mobile: 8557100,
+        electronic: 5077000,
+        it: 3252000,
+        ae: 3198000,
+        ah: 5438000,
+        as: 15082000,
+        mobileService: 998000,
+        printerService: 5438000,
+        systemService: 3214000,
+        total: 16886100
+      },
+      {
+        branch: "Shop 2",
+        mobile: 40854440,
+        electronic: 5494500,
+        it: 45525400,
+        ae: 3276000,
+        ah: 5512000,
+        as: 15236000,
+        mobileService: 1026000,
+        printerService: 5512000,
+        systemService: 3289000,
+        total: 98384340
+      },
+      {
+        branch: "Shop 3",
+        mobile: 60656800,
+        electronic: 15199000,
+        it: 18688500,
+        ae: 3241000,
+        ah: 5467000,
+        as: 15174000,
+        mobileService: 1009000,
+        printerService: 5467000,
+        systemService: 3241000,
+        total: 99374300
+      },
+      {
+        branch: "Shop 4",
+        mobile: 8190099,
+        electronic: 1014000,
+        it: 5479400,
+        ae: 3309000,
+        ah: 5526000,
+        as: 15291000,
+        mobileService: 1033000,
+        printerService: 5526000,
+        systemService: 3307000,
+        total: 14683499
+      },
+      {
+        branch: "Shop 5",
+        mobile: 23599700,
+        electronic: 10155400,
+        it: 7563800,
+        ae: 3224000,
+        ah: 5451000,
+        as: 15143000,
+        mobileService: 1002000,
+        printerService: 5451000,
+        systemService: 3226000,
+        total: 41318900
+      },
+      {
+        branch: "Warehouse",
+        mobile: 60656800,
+        electronic: 15199000,
+        it: 18688500,
+        ae: 3276000,
+        ah: 5498000,
+        as: 15218000,
+        mobileService: 1021000,
+        printerService: 5498000,
+        systemService: 3268000,
+        total: 99374300,
+        isWarehouse: true
+      }
+    ];
+
+    const coreCategories = [
+      { key: "mobile", label: "Mobile", color: "#2563eb" },
+      { key: "electronic", label: "Electronic", color: "#f59e0b" },
+      { key: "it", label: "IT", color: "#0f766e" }
+    ];
+
+    const serviceCategories = [
+      { key: "ae", label: "AE", color: "#6366f1" },
+      { key: "ah", label: "AH", color: "#8b5cf6" },
+      { key: "as", label: "AS", color: "#ec4899" },
+      { key: "mobileService", label: "Mobile Service", color: "#0ea5e9" },
+      { key: "printerService", label: "Printer Service", color: "#14b8a6" },
+      { key: "systemService", label: "System Service", color: "#f97316" }
+    ];
+
+    const state = {
+      charts: {}
+    };
+
+    const dom = {
+      scopeFilter: document.getElementById("scopeFilter"),
+      branchFilter: document.getElementById("branchFilter"),
+      viewFilter: document.getElementById("viewFilter"),
+      scopeNote: document.getElementById("scopeNote"),
+      matrixBody: document.getElementById("matrixBody"),
+      matrixFoot: document.getElementById("matrixFoot"),
+      kpiTotalValue: document.getElementById("kpiTotalValue"),
+      kpiBranchCount: document.getElementById("kpiBranchCount"),
+      kpiMobile: document.getElementById("kpiMobile"),
+      kpiMobileShare: document.getElementById("kpiMobileShare"),
+      kpiElectronic: document.getElementById("kpiElectronic"),
+      kpiElectronicShare: document.getElementById("kpiElectronicShare"),
+      kpiIT: document.getElementById("kpiIT"),
+      kpiITShare: document.getElementById("kpiITShare"),
+      kpiTopBranch: document.getElementById("kpiTopBranch"),
+      kpiTopValue: document.getElementById("kpiTopValue"),
+      kpiAvgValue: document.getElementById("kpiAvgValue")
+    };
+
+    function format(value) {
+      return numberFormatter.format(Math.round(value));
+    }
+
+    function sumBy(rows, key) {
+      return rows.reduce((total, row) => total + (row[key] || 0), 0);
+    }
+
+    function getScopeRows(scope) {
+      return scope === "retail"
+        ? inventoryRows.filter((row) => !row.isWarehouse)
+        : [...inventoryRows];
+    }
+
+    function getSelectedRows(scopeRows, branch) {
+      return branch === "all"
+        ? scopeRows
+        : scopeRows.filter((row) => row.branch === branch);
+    }
+
+    function refreshBranchFilter(scopeRows) {
+      const previous = dom.branchFilter.value || "all";
+      const options = ["<option value=\"all\">All Branches</option>"]
+        .concat(scopeRows.map((row) => `<option value="${row.branch}">${row.branch}</option>`));
+
+      dom.branchFilter.innerHTML = options.join("");
+      const stillExists = scopeRows.some((row) => row.branch === previous) || previous === "all";
+      dom.branchFilter.value = stillExists ? previous : "all";
+    }
+
+    function buildStats(rows) {
+      const totals = {
+        mobile: sumBy(rows, "mobile"),
+        electronic: sumBy(rows, "electronic"),
+        it: sumBy(rows, "it"),
+        total: sumBy(rows, "total"),
+        service: serviceCategories.reduce((sum, category) => sum + sumBy(rows, category.key), 0)
+      };
+
+      const topBranch = rows.reduce((top, row) => (!top || row.total > top.total ? row : top), null);
+      const average = rows.length ? totals.total / rows.length : 0;
+      const mobileShare = totals.total ? (totals.mobile / totals.total) * 100 : 0;
+      const electronicShare = totals.total ? (totals.electronic / totals.total) * 100 : 0;
+      const itShare = totals.total ? (totals.it / totals.total) * 100 : 0;
+
+      return { totals, topBranch, average, mobileShare, electronicShare, itShare };
+    }
+
+    function updateKpis(rows, stats) {
+      dom.kpiTotalValue.textContent = format(stats.totals.total);
+      dom.kpiBranchCount.textContent = `${rows.length} location${rows.length > 1 ? "s" : ""}`;
+      dom.kpiMobile.textContent = format(stats.totals.mobile);
+      dom.kpiMobileShare.textContent = `${stats.mobileShare.toFixed(1)}% of total`;
+      dom.kpiElectronic.textContent = format(stats.totals.electronic);
+      dom.kpiElectronicShare.textContent = `${stats.electronicShare.toFixed(1)}% of total`;
+      dom.kpiIT.textContent = format(stats.totals.it);
+      dom.kpiITShare.textContent = `${stats.itShare.toFixed(1)}% of total`;
+
+      dom.kpiTopBranch.textContent = stats.topBranch ? stats.topBranch.branch : "-";
+      dom.kpiTopValue.textContent = stats.topBranch ? format(stats.topBranch.total) : "0";
+      dom.kpiAvgValue.textContent = format(stats.average);
+    }
+
+    function renderMatrix(rows, stats) {
+      dom.matrixBody.innerHTML = rows.length
+        ? rows.map((row) => `
+          <tr class="hover:bg-slate-50 transition">
+            <td class="table-cell text-left font-semibold text-slate-800">
+              ${row.branch}
+              ${row.isWarehouse ? '<span class="ml-2 text-[10px] px-2 py-1 rounded-full bg-violet-100 text-violet-700 uppercase tracking-wider font-semibold">Warehouse</span>' : ""}
+            </td>
+            <td class="table-cell">${format(row.mobile)}</td>
+            <td class="table-cell">${format(row.electronic)}</td>
+            <td class="table-cell">${format(row.it)}</td>
+            <td class="table-cell">${format(row.ae)}</td>
+            <td class="table-cell">${format(row.ah)}</td>
+            <td class="table-cell">${format(row.as)}</td>
+            <td class="table-cell">${format(row.mobileService)}</td>
+            <td class="table-cell">${format(row.printerService)}</td>
+            <td class="table-cell">${format(row.systemService)}</td>
+            <td class="table-cell font-bold text-brand-700 bg-brand-50/40">${format(row.total)}</td>
+          </tr>
+        `).join("")
+        : `<tr><td colspan="11" class="px-4 py-10 text-center text-slate-400">No matching rows</td></tr>`;
+
+      dom.matrixFoot.innerHTML = `
+        <tr>
+          <td class="table-cell text-left font-bold text-slate-900">Total</td>
+          <td class="table-cell font-bold">${format(stats.totals.mobile)}</td>
+          <td class="table-cell font-bold">${format(stats.totals.electronic)}</td>
+          <td class="table-cell font-bold">${format(stats.totals.it)}</td>
+          <td class="table-cell font-bold">${format(sumBy(rows, "ae"))}</td>
+          <td class="table-cell font-bold">${format(sumBy(rows, "ah"))}</td>
+          <td class="table-cell font-bold">${format(sumBy(rows, "as"))}</td>
+          <td class="table-cell font-bold">${format(sumBy(rows, "mobileService"))}</td>
+          <td class="table-cell font-bold">${format(sumBy(rows, "printerService"))}</td>
+          <td class="table-cell font-bold">${format(sumBy(rows, "systemService"))}</td>
+          <td class="table-cell font-bold text-brand-700">${format(stats.totals.total)}</td>
+        </tr>
+      `;
+    }
+
+    function destroyChart(name) {
+      if (state.charts[name]) {
+        state.charts[name].destroy();
+        state.charts[name] = null;
+      }
+    }
+
+    function renderCoreChart(rows) {
+      destroyChart("branchCore");
+
+      state.charts.branchCore = new Chart(document.getElementById("branchCoreChart"), {
+        type: "bar",
+        data: {
+          labels: rows.map((row) => row.branch),
+          datasets: coreCategories.map((category) => ({
+            label: category.label,
+            data: rows.map((row) => row[category.key]),
+            backgroundColor: category.color,
+            borderRadius: 8,
+            maxBarThickness: 34
+          }))
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: "bottom",
+              labels: { usePointStyle: true, boxWidth: 8, padding: 16 }
+            },
+            tooltip: {
+              callbacks: {
+                label(context) {
+                  return `${context.dataset.label}: ${format(context.raw)}`;
+                }
+              }
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: {
+                callback: (value) => format(value)
+              },
+              grid: { color: "#edf2f7" }
+            },
+            x: {
+              grid: { display: false }
+            }
+          }
+        }
+      });
+    }
+
+    function renderCategoryMix(stats) {
+      destroyChart("categoryMix");
+
+      state.charts.categoryMix = new Chart(document.getElementById("categoryMixChart"), {
+        type: "doughnut",
+        data: {
+          labels: coreCategories.map((category) => category.label),
+          datasets: [{
+            data: coreCategories.map((category) => stats.totals[category.key]),
+            backgroundColor: coreCategories.map((category) => category.color),
+            borderColor: "#ffffff",
+            borderWidth: 2
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          cutout: "66%",
+          plugins: {
+            legend: {
+              position: "bottom",
+              labels: { usePointStyle: true, boxWidth: 8, padding: 14 }
+            },
+            tooltip: {
+              callbacks: {
+                label(context) {
+                  const total = context.dataset.data.reduce((acc, val) => acc + val, 0);
+                  const percent = total ? ((context.raw / total) * 100).toFixed(1) : "0.0";
+                  return `${context.label}: ${format(context.raw)} (${percent}%)`;
+                }
+              }
+            }
+          }
+        }
+      });
+    }
+
+    function renderServiceChart(rows) {
+      destroyChart("serviceMix");
+
+      state.charts.serviceMix = new Chart(document.getElementById("serviceMixChart"), {
+        type: "bar",
+        data: {
+          labels: serviceCategories.map((category) => category.label),
+          datasets: [{
+            label: "Service Total",
+            data: serviceCategories.map((category) => sumBy(rows, category.key)),
+            backgroundColor: serviceCategories.map((category) => category.color),
+            borderRadius: 8
+          }]
+        },
+        options: {
+          indexAxis: "y",
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                label(context) {
+                  return `MMK ${format(context.raw)}`;
+                }
+              }
+            }
+          },
+          scales: {
+            x: {
+              grid: { color: "#edf2f7" },
+              ticks: {
+                callback: (value) => format(value)
+              }
+            },
+            y: {
+              grid: { display: false }
+            }
+          }
+        }
+      });
+    }
+
+    function renderBranchRank(rows) {
+      destroyChart("branchRank");
+
+      const sortedRows = [...rows].sort((a, b) => b.total - a.total);
+
+      state.charts.branchRank = new Chart(document.getElementById("branchRankChart"), {
+        type: "line",
+        data: {
+          labels: sortedRows.map((row) => row.branch),
+          datasets: [{
+            label: "Branch Total",
+            data: sortedRows.map((row) => row.total),
+            borderColor: "#1d4ed8",
+            backgroundColor: "rgba(37, 99, 235, 0.08)",
+            fill: true,
+            tension: 0.35,
+            pointRadius: 4,
+            pointBackgroundColor: "#1d4ed8",
+            pointBorderColor: "#ffffff",
+            pointBorderWidth: 2
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                label(context) {
+                  return `MMK ${format(context.raw)}`;
+                }
+              }
+            }
+          },
+          scales: {
+            x: { grid: { display: false } },
+            y: {
+              beginAtZero: true,
+              grid: { color: "#edf2f7" },
+              ticks: {
+                callback: (value) => format(value)
+              }
+            }
+          }
+        }
+      });
+    }
+
+    function applyFilters() {
+      const scope = dom.scopeFilter.value;
+      const view = dom.viewFilter.value;
+      const scopeRows = getScopeRows(scope);
+
+      refreshBranchFilter(scopeRows);
+      const selectedRows = getSelectedRows(scopeRows, dom.branchFilter.value);
+      const stats = buildStats(selectedRows);
+
+      const scopeText = scope === "retail"
+        ? "Retail scope uses Shop 1-5. Core totals match source row: Mobile 141,858,139 | Electronic 36,939,900 | IT 80,509,100 | Total 270,647,139."
+        : "All locations scope includes Warehouse on top of Shop 1-5.";
+      dom.scopeNote.textContent = scopeText;
+
+      updateKpis(selectedRows, stats);
+      renderMatrix(selectedRows, stats);
+      renderCoreChart(selectedRows);
+      renderCategoryMix(stats);
+      renderServiceChart(selectedRows);
+      renderBranchRank(selectedRows);
+
+      document.getElementById("serviceMixChart").parentElement.parentElement.classList.toggle("opacity-40", view !== "service");
+      document.getElementById("branchCoreChart").parentElement.parentElement.classList.toggle("opacity-40", view !== "core");
+    }
+
+    dom.scopeFilter.addEventListener("change", applyFilters);
+    dom.branchFilter.addEventListener("change", applyFilters);
+    dom.viewFilter.addEventListener("change", applyFilters);
+
+    applyFilters();
+  </script>
+</body>
+
+</html>
