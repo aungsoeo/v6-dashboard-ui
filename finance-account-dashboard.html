@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-slate-100">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Linn - Account Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Inter', 'sans-serif'] },
+          colors: {
+            brand: { 50: '#eef6ff', 100: '#d9ecff', 500: '#0ea5e9', 600: '#0284c7', 700: '#0369a1', 900: '#0c4a6e' }
+          }
+        }
+      }
+    }
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+  <style type="text/tailwindcss">
+    @layer base { body { @apply font-sans text-slate-900 antialiased; } }
+    @layer components {
+      .panel { @apply bg-white rounded-2xl border border-slate-200 shadow-sm; }
+      .kpi { @apply panel p-4 min-h-[124px] flex flex-col justify-between; }
+      .label { @apply text-[11px] font-bold uppercase tracking-wider text-slate-500; }
+      .value { @apply text-2xl font-black tracking-tight text-slate-950; }
+      .table-head { @apply bg-slate-100 px-4 py-3 text-left text-[11px] font-bold uppercase tracking-wider text-slate-500; }
+      .table-cell { @apply border-b border-slate-100 px-4 py-3 text-sm text-slate-700; }
+      .num { @apply text-right tabular-nums; }
+      .menu-link { @apply block px-4 py-2.5 text-sm font-medium text-slate-600 hover:bg-brand-50 hover:text-brand-700 transition-colors border-l-4 border-transparent; }
+      .menu-active { @apply text-slate-950 bg-slate-50 border-brand-600; }
+      .filter-select { @apply block w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-700 outline-none focus:border-brand-600 focus:ring-2 focus:ring-brand-100; }
+      .tab-btn { @apply rounded-lg px-3 py-2 text-sm font-bold text-slate-500 transition-colors; }
+      .tab-active { @apply bg-brand-600 text-white shadow-sm; }
+    }
+  </style>
+</head>
+
+<body class="h-full bg-slate-100">
+  <div class="min-h-full">
+    <nav class="bg-white border-b border-slate-200 sticky top-0 z-40">
+      <div class="w-full px-4 lg:px-6">
+        <div class="flex h-16 items-center justify-between">
+          <div class="flex items-center">
+            <div class="flex items-center gap-2">
+              <div class="w-8 h-8 bg-brand-600 rounded-lg flex items-center justify-center shadow-lg shadow-brand-100">
+                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
+              </div>
+              <span class="text-xl font-black tracking-tight text-brand-700">Linn</span>
+            </div>
+            <div class="hidden md:ml-10 md:flex md:items-center gap-8">
+              <div class="relative group">
+                <button class="inline-flex items-center pt-1 text-sm font-semibold text-slate-700 hover:text-brand-700 border-b-2 border-transparent">
+                  <span>Dashboard</span>
+                  <svg class="ml-2 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                </button>
+                <div class="absolute left-0 mt-0 w-60 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                  <div class="mt-2 bg-white rounded-xl shadow-xl border border-slate-100 py-2 overflow-hidden">
+                    <a href="index.html" class="menu-link">Sale Dashboard (Amount)</a>
+                    <a href="sale-qty-dashboard.html" class="menu-link">Sale Dashboard (Qty)</a>
+                    <a href="inventory-dashboard.html" class="menu-link">Inventory Dashboard</a>
+                  </div>
+                </div>
+              </div>
+              <div class="relative group">
+                <button class="inline-flex items-center pt-1 text-sm font-semibold text-brand-700 border-b-2 border-brand-600">
+                  <span>Finance Dashboard</span>
+                  <svg class="ml-2 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                </button>
+                <div class="absolute left-0 mt-0 w-64 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                  <div class="mt-2 bg-white rounded-xl shadow-xl border border-slate-100 py-2 overflow-hidden">
+                    <a href="finance-account-dashboard.html" class="menu-link menu-active">Account Dashboard</a>
+                    <a href="finance-income-dashboard.html" class="menu-link">Income Statement Dashboard</a>
+                    <a href="finance-balance-sheet-dashboard.html" class="menu-link">Balance Sheet Dashboard</a>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <span class="text-xs font-semibold text-slate-400 bg-slate-100 px-2 py-1 rounded-full uppercase tracking-widest">Finance</span>
+        </div>
+      </div>
+    </nav>
+
+    <main class="w-full px-4 lg:px-6 py-6 space-y-6">
+      <section>
+        <p class="label">Finance Dashboard</p>
+        <h1 class="text-2xl lg:text-3xl font-black tracking-tight mt-1">Account Dashboard</h1>
+      </section>
+
+      <section class="panel p-4">
+        <div class="grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-4 lg:items-end">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label for="yearFilter" class="label block mb-1">Year</label>
+              <select id="yearFilter" class="filter-select">
+                <option value="2026" selected>2026</option>
+              </select>
+            </div>
+            <div>
+              <label for="monthFilter" class="label block mb-1">Month</label>
+              <select id="monthFilter" class="filter-select">
+                <option value="01" selected>January</option>
+                <option value="02">February</option>
+                <option value="03">March</option>
+                <option value="04">April</option>
+                <option value="05">May</option>
+                <option value="06">June</option>
+                <option value="07">July</option>
+                <option value="08">August</option>
+                <option value="09">September</option>
+                <option value="10">October</option>
+                <option value="11">November</option>
+                <option value="12">December</option>
+              </select>
+            </div>
+          </div>
+          <div class="flex items-center justify-between gap-3">
+            <span id="periodLabel" class="text-sm font-semibold text-slate-500">January 2026</span>
+            <div class="inline-flex rounded-xl bg-slate-100 p-1">
+              <button type="button" class="tab-btn tab-active" data-view="chart">Chart View</button>
+              <button type="button" class="tab-btn" data-view="table">Table View</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-4">
+        <article class="kpi bg-brand-50 border-brand-100"><div class="label text-brand-700">Supplier Balance</div><div class="value text-brand-900" id="supplierBalance">0</div><div class="text-xs text-slate-500">Purchase 1,100 / Payment 595</div></article>
+        <article class="kpi"><div class="label">Receivable Balance</div><div class="value" id="receivableBalance">0</div><div class="text-xs text-slate-500">Opening + Credit - Receipt</div></article>
+        <article class="kpi"><div class="label">Current Assets</div><div class="value text-emerald-700" id="currentAssets">0</div><div class="text-xs text-slate-500">Cash and bank balances</div></article>
+        <article class="kpi"><div class="label">Stock Balance</div><div class="value text-amber-700" id="stockBalance">0</div><div class="text-xs text-slate-500">Shop 1 to Shop 5</div></article>
+        <article class="kpi"><div class="label">Expense Total</div><div class="value text-rose-700" id="expenseTotal">0</div><div class="text-xs text-slate-500">Operating expense groups</div></article>
+      </section>
+
+      <section id="chartView" class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+        <article class="panel p-5 xl:col-span-2">
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="font-bold text-slate-900">Supplier Movement</h2>
+            <span class="text-xs font-semibold text-slate-400 uppercase tracking-widest">Opening / Purchase / Payment</span>
+          </div>
+          <div class="h-80"><canvas id="supplierChart"></canvas></div>
+        </article>
+        <article class="panel p-5">
+          <h2 class="font-bold text-slate-900 mb-4">Cash & Bank Mix</h2>
+          <div class="h-80"><canvas id="assetChart"></canvas></div>
+        </article>
+        <article class="panel p-5 xl:col-span-2">
+          <h2 class="font-bold text-slate-900 mb-4">Receivable Balance by Shop</h2>
+          <div class="h-80"><canvas id="receivableChart"></canvas></div>
+        </article>
+        <article class="panel p-5">
+          <h2 class="font-bold text-slate-900 mb-4">Stock Balance</h2>
+          <div class="h-80"><canvas id="stockChart"></canvas></div>
+        </article>
+      </section>
+
+      <section id="tableView" class="space-y-6 hidden">
+        <article class="panel overflow-hidden">
+          <div class="px-5 py-4 border-b border-slate-100">
+            <p class="label text-center">Vendor</p>
+            <h2 class="font-bold text-center">Supplier</h2>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full">
+              <thead><tr><th class="table-head">Supplier</th><th class="table-head num">Opening</th><th class="table-head num">Purchase</th><th class="table-head num">Payment</th><th class="table-head num">Balance</th></tr></thead>
+              <tbody id="supplierRows"></tbody>
+            </table>
+          </div>
+        </article>
+        <article class="panel overflow-hidden">
+          <div class="px-5 py-4 border-b border-slate-100"><h2 class="font-bold">Receivable by Shop</h2></div>
+          <div class="overflow-x-auto">
+            <table class="w-full">
+              <thead><tr><th class="table-head">Shop</th><th class="table-head num">Opening</th><th class="table-head num">Credit</th><th class="table-head num">Receipt</th><th class="table-head num">Balance</th></tr></thead>
+              <tbody id="receivableRows"></tbody>
+            </table>
+          </div>
+        </article>
+        <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+          <article class="panel overflow-hidden xl:col-span-2">
+            <div class="px-5 py-4 border-b border-slate-100"><h2 class="font-bold">Expenses</h2></div>
+            <div class="overflow-x-auto">
+              <table class="w-full">
+                <thead><tr><th class="table-head">Expenses</th><th class="table-head num">Amount</th><th class="table-head num">Share</th></tr></thead>
+                <tbody id="expenseRows"></tbody>
+              </table>
+            </div>
+          </article>
+          <div class="space-y-6">
+            <article class="panel overflow-hidden">
+              <div class="px-5 py-4 border-b border-slate-100"><h2 class="font-bold">Current Assets</h2></div>
+              <div class="overflow-x-auto">
+                <table class="w-full">
+                  <thead><tr><th class="table-head">Current Assets</th><th class="table-head num">Amount</th></tr></thead>
+                  <tbody id="currentAssetRows"></tbody>
+                </table>
+              </div>
+            </article>
+            <article class="panel overflow-hidden">
+              <div class="px-5 py-4 border-b border-slate-100"><h2 class="font-bold">Stock Balance</h2></div>
+              <div class="overflow-x-auto">
+                <table class="w-full">
+                  <thead><tr><th class="table-head">Stock Balance</th><th class="table-head num">Amount</th></tr></thead>
+                  <tbody id="stockRows"></tbody>
+                </table>
+              </div>
+            </article>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    const fmt = new Intl.NumberFormat('en-US');
+    const monthNames = {
+      '01': 'January', '02': 'February', '03': 'March', '04': 'April', '05': 'May', '06': 'June',
+      '07': 'July', '08': 'August', '09': 'September', '10': 'October', '11': 'November', '12': 'December'
+    };
+    const supplier = [
+      { name: 'Mobile', opening: 100, purchase: 200, payment: 100, balance: 200 },
+      { name: 'IT', opening: 50, purchase: 300, payment: 150, balance: 200 },
+      { name: 'Electronic', opening: 80, purchase: 500, payment: 300, balance: 280 },
+      { name: 'Service', opening: 70, purchase: 50, payment: 20, balance: 100 },
+      { name: 'Office', opening: 50, purchase: 40, payment: 20, balance: 70 },
+      { name: 'Admin', opening: 10, purchase: 10, payment: 5, balance: 15 }
+    ];
+    const expenses = [
+      ['Sale & Marketing Exp', 10], ['Service Exp', 20], ['Staff Exp', 30], ['Repair & Maintenance Exp', 25],
+      ['Office & Shop Operating Exp', 20], ['Administrative & General Exp', 60], ['Personal Exp', 10],
+      ['Home Exp', 15], ['Tax Exp', 20], ['Financial Exp', 10], ['Training Exp', 5], ['Depreciation Exp', 200],
+      ['Project & Related Company Exp', 10]
+    ];
+    const receivable = [
+      { shop: 'Shop 1', opening: 100, credit: 50, receipt: 0, balance: 150 },
+      { shop: 'Shop 2', opening: 200, credit: 0, receipt: 50, balance: 150 },
+      { shop: 'Shop 3', opening: 300, credit: 10, receipt: 20, balance: 290 },
+      { shop: 'Shop 4', opening: 400, credit: 0, receipt: 5, balance: 395 },
+      { shop: 'Shop 5', opening: 500, credit: 5, receipt: 10, balance: 495 }
+    ];
+    const currentAssets = [['Cash', 700], ['AYA Bank', 500], ['KBZ Bank', 1000], ['CB Bank', 400], ['YOMA Bank', 500], ['UAB Bank', 100]];
+    const stock = [['Shop 1', 1000], ['Shop 2', 2000], ['Shop 3', 3000], ['Shop 4', 4000], ['Shop 5', 5000]];
+    const sum = (rows, key = 1) => rows.reduce((total, row) => total + (Array.isArray(row) ? row[key] : row[key]), 0);
+    document.getElementById('supplierBalance').textContent = fmt.format(sum(supplier, 'balance'));
+    document.getElementById('receivableBalance').textContent = fmt.format(sum(receivable, 'balance'));
+    document.getElementById('currentAssets').textContent = fmt.format(sum(currentAssets));
+    document.getElementById('stockBalance').textContent = fmt.format(sum(stock));
+    document.getElementById('expenseTotal').textContent = fmt.format(sum(expenses));
+    const totalRowClass = 'bg-slate-50 font-black text-slate-950';
+    document.getElementById('supplierRows').innerHTML = supplier.map(row => `<tr><td class="table-cell font-semibold">${row.name}</td><td class="table-cell num">${fmt.format(row.opening)}</td><td class="table-cell num">${fmt.format(row.purchase)}</td><td class="table-cell num">${fmt.format(row.payment)}</td><td class="table-cell num font-bold text-slate-950">${fmt.format(row.balance)}</td></tr>`).join('') + `<tr class="${totalRowClass}"><td class="table-cell">Total</td><td class="table-cell num"></td><td class="table-cell num">${fmt.format(sum(supplier, 'purchase'))}</td><td class="table-cell num">${fmt.format(sum(supplier, 'payment'))}</td><td class="table-cell num">${fmt.format(sum(supplier, 'balance'))}</td></tr>`;
+    document.getElementById('receivableRows').innerHTML = receivable.map(row => `<tr><td class="table-cell font-semibold">${row.shop}</td><td class="table-cell num">${fmt.format(row.opening)}</td><td class="table-cell num">${fmt.format(row.credit)}</td><td class="table-cell num">${fmt.format(row.receipt)}</td><td class="table-cell num font-bold text-slate-950">${fmt.format(row.balance)}</td></tr>`).join('') + `<tr class="${totalRowClass}"><td class="table-cell">Total</td><td class="table-cell num">${fmt.format(sum(receivable, 'opening'))}</td><td class="table-cell num">${fmt.format(sum(receivable, 'credit'))}</td><td class="table-cell num">${fmt.format(sum(receivable, 'receipt'))}</td><td class="table-cell num">${fmt.format(sum(receivable, 'balance'))}</td></tr>`;
+    document.getElementById('expenseRows').innerHTML = expenses.map(([name, amount]) => `<tr><td class="table-cell">${name};</td><td class="table-cell num font-semibold">${fmt.format(amount)}</td><td class="table-cell num">${((amount / sum(expenses)) * 100).toFixed(1)}%</td></tr>`).join('') + `<tr class="${totalRowClass}"><td class="table-cell">Total</td><td class="table-cell num">${fmt.format(sum(expenses))}</td><td class="table-cell num">100.0%</td></tr>`;
+    document.getElementById('currentAssetRows').innerHTML = currentAssets.map(([name, amount]) => `<tr><td class="table-cell">${name}</td><td class="table-cell num font-semibold">${fmt.format(amount)}</td></tr>`).join('') + `<tr class="${totalRowClass}"><td class="table-cell">Total</td><td class="table-cell num">${fmt.format(sum(currentAssets))}</td></tr>`;
+    document.getElementById('stockRows').innerHTML = stock.map(([name, amount]) => `<tr><td class="table-cell">${name}</td><td class="table-cell num font-semibold">${fmt.format(amount)}</td></tr>`).join('') + `<tr class="${totalRowClass}"><td class="table-cell">Total</td><td class="table-cell num">${fmt.format(sum(stock))}</td></tr>`;
+    const supplierChart = new Chart(document.getElementById('supplierChart'), {
+      type: 'bar',
+      data: { labels: supplier.map(x => x.name), datasets: [
+        { label: 'Opening', data: supplier.map(x => x.opening), backgroundColor: '#38bdf8' },
+        { label: 'Purchase', data: supplier.map(x => x.purchase), backgroundColor: '#0f766e' },
+        { label: 'Payment', data: supplier.map(x => x.payment), backgroundColor: '#f97316' },
+        { label: 'Balance', data: supplier.map(x => x.balance), type: 'line', borderColor: '#be123c', backgroundColor: '#be123c', tension: .35 }
+      ] },
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } }, scales: { y: { beginAtZero: true } } }
+    });
+    const assetChart = new Chart(document.getElementById('assetChart'), {
+      type: 'doughnut',
+      data: { labels: currentAssets.map(x => x[0]), datasets: [{ data: currentAssets.map(x => x[1]), backgroundColor: ['#0284c7', '#14b8a6', '#22c55e', '#f59e0b', '#ef4444', '#64748b'] }] },
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+    });
+    const receivableChart = new Chart(document.getElementById('receivableChart'), {
+      type: 'bar',
+      data: { labels: receivable.map(x => x.shop), datasets: [
+        { label: 'Opening', data: receivable.map(x => x.opening), backgroundColor: '#38bdf8' },
+        { label: 'Credit', data: receivable.map(x => x.credit), backgroundColor: '#16a34a' },
+        { label: 'Receipt', data: receivable.map(x => x.receipt), backgroundColor: '#f97316' },
+        { label: 'Balance', data: receivable.map(x => x.balance), type: 'line', borderColor: '#0f172a', backgroundColor: '#0f172a', tension: .35 }
+      ] },
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } }, scales: { y: { beginAtZero: true } } }
+    });
+    const stockChart = new Chart(document.getElementById('stockChart'), {
+      type: 'bar',
+      data: { labels: stock.map(x => x[0]), datasets: [{ label: 'Stock Amount', data: stock.map(x => x[1]), backgroundColor: '#f59e0b' }] },
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+    });
+    function syncPeriod() {
+      const year = document.getElementById('yearFilter').value;
+      const month = document.getElementById('monthFilter').value;
+      document.getElementById('periodLabel').textContent = `${monthNames[month]} ${year}`;
+    }
+    function showView(view) {
+      document.getElementById('chartView').classList.toggle('hidden', view !== 'chart');
+      document.getElementById('tableView').classList.toggle('hidden', view !== 'table');
+      document.querySelectorAll('[data-view]').forEach(btn => btn.classList.toggle('tab-active', btn.dataset.view === view));
+      if (view === 'chart') {
+        requestAnimationFrame(() => {
+          supplierChart.resize();
+          assetChart.resize();
+          receivableChart.resize();
+          stockChart.resize();
+        });
+      }
+    }
+    document.getElementById('yearFilter').addEventListener('change', syncPeriod);
+    document.getElementById('monthFilter').addEventListener('change', syncPeriod);
+    document.querySelectorAll('[data-view]').forEach(btn => btn.addEventListener('click', () => showView(btn.dataset.view)));
+  </script>
+</body>
+
+</html>

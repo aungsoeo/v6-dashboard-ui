@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-slate-100">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Linn - Balance Sheet Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = { theme: { extend: { fontFamily: { sans: ['Inter', 'sans-serif'] }, colors: { brand: { 50: '#eef6ff', 100: '#d9ecff', 600: '#0284c7', 700: '#0369a1' } } } } }
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+  <style type="text/tailwindcss">
+    @layer base { body { @apply font-sans text-slate-900 antialiased; } }
+    @layer components {
+      .panel { @apply bg-white rounded-2xl border border-slate-200 shadow-sm; }
+      .kpi { @apply panel p-4 min-h-[124px] flex flex-col justify-between; }
+      .label { @apply text-[11px] font-bold uppercase tracking-wider text-slate-500; }
+      .value { @apply text-2xl font-black tracking-tight text-slate-950; }
+      .table-head { @apply bg-slate-100 px-4 py-3 text-left text-[11px] font-bold uppercase tracking-wider text-slate-500; }
+      .table-cell { @apply border-b border-slate-100 px-4 py-3 text-sm text-slate-700; }
+      .num { @apply text-right tabular-nums; }
+      .menu-link { @apply block px-4 py-2.5 text-sm font-medium text-slate-600 hover:bg-brand-50 hover:text-brand-700 transition-colors border-l-4 border-transparent; }
+      .menu-active { @apply text-slate-950 bg-slate-50 border-brand-600; }
+      .filter-select { @apply block w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-700 outline-none focus:border-brand-600 focus:ring-2 focus:ring-brand-100; }
+      .tab-btn { @apply rounded-lg px-3 py-2 text-sm font-bold text-slate-500 transition-colors; }
+      .tab-active { @apply bg-brand-600 text-white shadow-sm; }
+    }
+  </style>
+</head>
+<body class="h-full bg-slate-100">
+  <div class="min-h-full">
+    <nav class="bg-white border-b border-slate-200 sticky top-0 z-40">
+      <div class="w-full px-4 lg:px-6"><div class="flex h-16 items-center justify-between"><div class="flex items-center"><div class="flex items-center gap-2"><div class="w-8 h-8 bg-brand-600 rounded-lg flex items-center justify-center shadow-lg shadow-brand-100"><svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg></div><span class="text-xl font-black tracking-tight text-brand-700">Linn</span></div><div class="hidden md:ml-10 md:flex md:items-center gap-8"><div class="relative group"><button class="inline-flex items-center pt-1 text-sm font-semibold text-slate-700 hover:text-brand-700 border-b-2 border-transparent"><span>Dashboard</span><svg class="ml-2 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg></button><div class="absolute left-0 mt-0 w-60 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50"><div class="mt-2 bg-white rounded-xl shadow-xl border border-slate-100 py-2 overflow-hidden"><a href="index.html" class="menu-link">Sale Dashboard (Amount)</a><a href="sale-qty-dashboard.html" class="menu-link">Sale Dashboard (Qty)</a><a href="inventory-dashboard.html" class="menu-link">Inventory Dashboard</a></div></div></div><div class="relative group"><button class="inline-flex items-center pt-1 text-sm font-semibold text-brand-700 border-b-2 border-brand-600"><span>Finance Dashboard</span><svg class="ml-2 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg></button><div class="absolute left-0 mt-0 w-64 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50"><div class="mt-2 bg-white rounded-xl shadow-xl border border-slate-100 py-2 overflow-hidden"><a href="finance-account-dashboard.html" class="menu-link">Account Dashboard</a><a href="finance-income-dashboard.html" class="menu-link">Income Statement Dashboard</a><a href="finance-balance-sheet-dashboard.html" class="menu-link menu-active">Balance Sheet Dashboard</a></div></div></div></div></div><span class="text-xs font-semibold text-slate-400 bg-slate-100 px-2 py-1 rounded-full uppercase tracking-widest">MMK</span></div></div>
+    </nav>
+    <main class="w-full px-4 lg:px-6 py-6 space-y-6">
+      <section><p class="label">Finance Dashboard</p><h1 class="text-2xl lg:text-3xl font-black tracking-tight mt-1">Balance Sheet Dashboard</h1></section>
+      <section class="panel p-4">
+        <div class="grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-4 lg:items-end">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div><label for="yearFilter" class="label block mb-1">Year</label><select id="yearFilter" class="filter-select"><option value="2026" selected>2026</option></select></div>
+            <div><label for="monthFilter" class="label block mb-1">Month</label><select id="monthFilter" class="filter-select"><option value="01" selected>January</option><option value="02">February</option><option value="03">March</option><option value="04">April</option><option value="05">May</option><option value="06">June</option><option value="07">July</option><option value="08">August</option><option value="09">September</option><option value="10">October</option><option value="11">November</option><option value="12">December</option></select></div>
+          </div>
+          <div class="flex items-center justify-between gap-3"><span id="periodLabel" class="text-sm font-semibold text-slate-500">January 2026</span><div class="inline-flex rounded-xl bg-slate-100 p-1"><button type="button" class="tab-btn tab-active" data-view="chart">Chart View</button><button type="button" class="tab-btn" data-view="table">Table View</button></div></div>
+        </div>
+      </section>
+      <section class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-4">
+        <article class="kpi bg-brand-50 border-brand-100"><div class="label text-brand-700">Total Assets</div><div class="value text-brand-900" id="totalAssets">0</div><div class="text-xs text-slate-500">Fixed + current assets</div></article>
+        <article class="kpi"><div class="label">Current Assets</div><div class="value text-emerald-700" id="currentAssets">0</div><div class="text-xs text-slate-500" id="currentAssetShare">0%</div></article>
+        <article class="kpi"><div class="label">Fixed Assets</div><div class="value" id="fixedAssets">0</div><div class="text-xs text-slate-500" id="fixedAssetShare">0%</div></article>
+        <article class="kpi"><div class="label">Long Term Liabilities</div><div class="value text-rose-700" id="longLiabilities">0</div><div class="text-xs text-slate-500">Bank loan and other liabilities</div></article>
+        <article class="kpi"><div class="label">Profit For The Year</div><div class="value text-slate-950" id="profitYear">0</div><div class="text-xs text-slate-500">Equity component</div></article>
+      </section>
+      <section id="chartView" class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+        <article class="panel p-5 xl:col-span-2"><div class="mb-4"><h2 class="font-bold">Assets vs Equity & Liabilities</h2></div><div class="h-80"><canvas id="positionChart"></canvas></div></article>
+        <article class="panel p-5"><div class="mb-4"><h2 class="font-bold">Asset Mix</h2></div><div class="h-80"><canvas id="assetMixChart"></canvas></div></article>
+      </section>
+      <section id="tableView" class="space-y-6 hidden">
+        <article class="panel overflow-hidden">
+          <div class="px-5 py-4 border-b border-slate-100">
+            <h2 class="font-bold">Balance Sheet Statement</h2>
+            <p class="text-xs font-semibold text-slate-500 mt-1">Full statement from the uploaded sheet.</p>
+          </div>
+          <div class="overflow-x-auto max-h-[760px]">
+            <table class="w-full min-w-[680px]">
+              <thead>
+                <tr>
+                  <th class="table-head">Account</th>
+                  <th class="table-head num">Amount</th>
+                </tr>
+              </thead>
+              <tbody id="balanceSheetRows"></tbody>
+            </table>
+          </div>
+        </article>
+      </section>
+    </main>
+  </div>
+  <script>
+    const fmt = new Intl.NumberFormat('en-US');
+    const monthNames = { '01': 'January', '02': 'February', '03': 'March', '04': 'April', '05': 'May', '06': 'June', '07': 'July', '08': 'August', '09': 'September', '10': 'October', '11': 'November', '12': 'December' };
+    const fixedAssets = [['Vehicle', 10000000], ['Machinery', 5000000], ['Electrical', 2000000], ['Phone', 5000000], ['Computer & Accessories', 3000000], ['Air Conditioner / Electronic', 3500000], ['Furniture & Fitting', 2000000], ['Office Equipment', 1500000]];
+    const currentAssets = [['Cash (MMK)', 2000000], ['Cash (Yuan)', 2500000], ['Cash (Baht)', 3000000], ['AYA Bank', 1500000], ['KBZ Bank', 1500000], ['YOMA Bank', 1500000], ['CB Bank', 1500000], ['INNWA Bank', 1500000], ['MEB Bank', 1500000], ['UAB Bank', 1500000], ['Eload', 1500000], ['Sale Cash', 1500000], ['Trade Debtor', 1500000], ['Inventory', 1500000], ['Office Stock', 1500000], ['Prepaid', 20000000], ['Advance', 5000000], ['IT Cash Back', 3980000], ['Mobile Cash Back', 9000000], ['Electronic Cash Back', 5000000], ['Loan Receivable', 5600000], ['Customer Receivable', 12000000]];
+    const liabilities = [['Bank Loan', 200000000], ['Other Long Term Liabilities', 30000000], ['Trade Creditors', -45920000], ['Payable', 5000000], ['Advance Received', 5000000], ['Suspend', -6000000], ['Light Box & Counter Receivable', -40000000], ['Service Receivable', -5000000], ['Payable', -50000000], ['Profit For the Year', 25000000]];
+    const balanceSheetRows = [
+      ['Cost Centre : Linn', null, 'meta'],
+      ['Department : All', null, 'meta'],
+      ['Base Currency : MMK', null, 'meta strong'],
+      ['Assets', null, 'major'],
+      ['Fixed Assets', null, 'section'],
+      ['Vehicle', 10000000, 'detail'],
+      ['Machinery', 5000000, 'detail'],
+      ['Electrical', 2000000, 'detail'],
+      ['Phone', 5000000, 'detail'],
+      ['Computer & Accessories', 3000000, 'detail'],
+      ['Air Conditioner (or) Electronic', 3500000, 'detail'],
+      ['Furniture & Fitting', 2000000, 'detail'],
+      ['Office Equipment', 1500000, 'detail'],
+      ['Total Fixed Assets', 32000000, 'total'],
+      ['Current Assets', null, 'section'],
+      ['Cash (MMK)', 2000000, 'detail'],
+      ['Cash (Yuan)', 2500000, 'detail'],
+      ['Cash (Baht)', 3000000, 'detail'],
+      ['AYA Bank', 1500000, 'detail'],
+      ['KBZ Bank', 1500000, 'detail'],
+      ['YOMA Bank', 1500000, 'detail'],
+      ['CB Bank', 1500000, 'detail'],
+      ['INNWA Bank', 1500000, 'detail'],
+      ['MEB Bank', 1500000, 'detail'],
+      ['UAB Bank', 1500000, 'detail'],
+      ['Eload', 1500000, 'detail'],
+      ['Sale Cash', 1500000, 'detail'],
+      ['Trade Debtor', 1500000, 'detail'],
+      ['Inventory', 1500000, 'detail'],
+      ['Office Stock', 1500000, 'detail'],
+      ['Prepaid', 20000000, 'detail'],
+      ['Advance', 5000000, 'detail'],
+      ['IT Cash Back', 3980000, 'detail'],
+      ['Mobile Cash Back', 9000000, 'detail'],
+      ['Electronic Cash Back', 5000000, 'detail'],
+      ['Loan Receivable', 5600000, 'detail'],
+      ['1-440001    Customer Receivable', 12000000, 'detail'],
+      ['Total Current Assets', 86080000, 'total'],
+      ['Total Assets', 118080000, 'total strong'],
+      ['Equity And Liabilities', null, 'major'],
+      ['Long Term Liabilities', null, 'section'],
+      ['Bank Loan', 200000000, 'detail'],
+      ['Other Long Term Liabilities', 30000000, 'detail'],
+      ['Total Long Term Liabilities', 230000000, 'total'],
+      ['Current Liabilities', null, 'section'],
+      ['Trade Creditors', -45920000, 'detail'],
+      ['Payable', 5000000, 'detail'],
+      ['Advance Received', 5000000, 'detail'],
+      ['Suspend', -6000000, 'detail'],
+      ['Light Box & Counter  Receiable', -40000000, 'detail'],
+      ['Service Receiable', -5000000, 'detail'],
+      ['Payable ', -50000000, 'detail'],
+      ['Total Current Liabilities', -136920000, 'total'],
+      ['Profit For the Year ', 25000000, 'total'],
+      ['Total Equity and Liabilities', 118080000, 'total strong']
+    ];
+    const sum = rows => rows.reduce((total, row) => total + row[1], 0);
+    const totalFixed = sum(fixedAssets);
+    const totalCurrent = sum(currentAssets);
+    const totalAssets = totalFixed + totalCurrent;
+    const totalLongLiabilities = 230000000;
+    const totalCurrentLiabilities = -136920000;
+    const profitYear = 25000000;
+    document.getElementById('totalAssets').textContent = fmt.format(totalAssets);
+    document.getElementById('currentAssets').textContent = fmt.format(totalCurrent);
+    document.getElementById('currentAssetShare').textContent = `${((totalCurrent / totalAssets) * 100).toFixed(1)}% of assets`;
+    document.getElementById('fixedAssets').textContent = fmt.format(totalFixed);
+    document.getElementById('fixedAssetShare').textContent = `${((totalFixed / totalAssets) * 100).toFixed(1)}% of assets`;
+    document.getElementById('longLiabilities').textContent = fmt.format(totalLongLiabilities);
+    document.getElementById('profitYear').textContent = fmt.format(profitYear);
+    const accounting = value => value == null ? '' : value < 0 ? `(${fmt.format(Math.abs(value))})` : fmt.format(value);
+    document.getElementById('balanceSheetRows').innerHTML = balanceSheetRows.map(([name, amount, type]) => {
+      const isMajor = type.includes('major');
+      const isSection = type.includes('section');
+      const isTotal = type.includes('total');
+      const isMeta = type.includes('meta');
+      const rowClass = isMajor ? 'bg-slate-900 text-white font-black' : isSection ? 'bg-slate-100 font-black text-slate-900' : isTotal ? 'bg-slate-50 font-black text-slate-950' : isMeta ? 'bg-white font-semibold text-slate-700' : '';
+      const nameClass = type.includes('detail') ? 'pl-10' : '';
+      const amountClass = amount < 0 ? 'text-rose-700' : '';
+      return `<tr class="${rowClass}"><td class="table-cell ${nameClass}">${name}</td><td class="table-cell num ${amountClass}">${accounting(amount)}</td></tr>`;
+    }).join('');
+    const positionChart = new Chart(document.getElementById('positionChart'), { type: 'bar', data: { labels: ['Fixed Assets', 'Current Assets', 'Long Term Liabilities', 'Current Liabilities', 'Profit For The Year'], datasets: [{ label: 'MMK', data: [totalFixed, totalCurrent, totalLongLiabilities, totalCurrentLiabilities, profitYear], backgroundColor: ['#0284c7', '#16a34a', '#f97316', '#e11d48', '#0f172a'] }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { ticks: { callback: v => fmt.format(v) } } } } });
+    const assetMixChart = new Chart(document.getElementById('assetMixChart'), { type: 'doughnut', data: { labels: ['Fixed Assets', 'Current Assets'], datasets: [{ data: [totalFixed, totalCurrent], backgroundColor: ['#0284c7', '#16a34a'] }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } } });
+    function syncPeriod() {
+      document.getElementById('periodLabel').textContent = `${monthNames[document.getElementById('monthFilter').value]} ${document.getElementById('yearFilter').value}`;
+    }
+    function showView(view) {
+      document.getElementById('chartView').classList.toggle('hidden', view !== 'chart');
+      document.getElementById('tableView').classList.toggle('hidden', view !== 'table');
+      document.querySelectorAll('[data-view]').forEach(btn => btn.classList.toggle('tab-active', btn.dataset.view === view));
+      if (view === 'chart') requestAnimationFrame(() => { positionChart.resize(); assetMixChart.resize(); });
+    }
+    document.getElementById('yearFilter').addEventListener('change', syncPeriod);
+    document.getElementById('monthFilter').addEventListener('change', syncPeriod);
+    document.querySelectorAll('[data-view]').forEach(btn => btn.addEventListener('click', () => showView(btn.dataset.view)));
+  </script>
+</body>
+</html>
